@@ -1,0 +1,4 @@
+berlin/loginVBB/data_storage/*
+berlin/OpenVBB/data_storage/*
+*/.ipynb_checkpoints/*
+*.pyc
