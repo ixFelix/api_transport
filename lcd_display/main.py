@@ -65,7 +65,8 @@ def nextDeparturesAtStop(name=False, ext=0, maxNo=3):
         else:
             print("ERROR. You must provide name or ext.")
 
-    command, param = 'stops/' + str(ext) + '/' + 'departures?', {'direction': ext_dir, 'results': maxNo}
+    command, param = 'stops/' + str(ext) + '/' + 'departures?', \
+                     {'direction': ext_dir, 'results': maxNo, 'duration': 20}
     response = getData(command, param)
     return response
 
