@@ -71,3 +71,10 @@ def nextDeparturesAtStop(name=False, ext=0, maxNo=3, ext_dir=0):
 
 ext = 900070401  # "Tauernallee Santisstrasse"
 ext_dir = 900070301  # U Alt-Mariendorf
+
+def handler_debug(ext=ext, maxNo=10, ext_dir=ext_dir):
+    # if api is down, use this artificial data for debugging
+    return [{'line': {'name': 'M76'},
+             'direction': 'Walter-Schreiber-Platz',
+             'when': '2022-10-26T23:20:00'}
+            for i in range(maxNo)]
