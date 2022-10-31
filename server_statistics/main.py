@@ -31,9 +31,10 @@ if len(files)>0:
 else:
     data = pd.DataFrame()
 
-# while True:
+j=0
+while True:
 #if True:
-for j in range(100):
+#for j in range(100):
     print("  - begin of loop (" + str(j) + "). Time: ", time.time() - t1)
     t_loop = time.time()
 
@@ -86,5 +87,6 @@ for j in range(100):
         print(" - Error in Request:", e)
     time.sleep(3 * 60)
     #time.sleep(3)
+    j=j+1
 
 print("end of script. Total runtime =", time.time() - t1)
