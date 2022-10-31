@@ -8,8 +8,8 @@ import pandas as pd
 import os
 
 #path_wd = os.getcwd()# + "\\server_statistics\\"
-#path_wd = "/home/pi/work/api_transport/server_statistics/"
-path_wd = "D:\\implementations\\api_transport\\server_statistics\\"
+path_wd = "/home/pi/work/api_transport/server_statistics/"
+#path_wd = "D:\\implementations\\api_transport\\server_statistics\\"
 
 t1 = time.time()
 now = datetime.datetime.now()
@@ -29,6 +29,7 @@ pd.set_option('display.max_columns', 9)
 # read data from earlier run and remove files that do not match ext, ext_dir, "_h" and ".csv"
 #files = os.listdir(path_wd + "\\records\\hourly\\")
 files_raw = os.listdir(path_wd + "/records/hourly/")
+files_raw.sort()
 print("all files",files_raw)
 for station_i in range(len(data)):
     var = [((("s" + str(ext_list[station_i]) + "_sDir" + str(ext_dir_list[station_i])) in f) & ("_h" in f) & (".csv" in f)) for f in files_raw]

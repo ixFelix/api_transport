@@ -3,6 +3,7 @@ import time
 import datetime
 import numpy as np
 import xmltodict
+import lcddriver
 
 t1 = time.time()
 
@@ -74,7 +75,12 @@ def nextDeparturesAtStop(name=False, ext=0, maxNo=3):
 ext = 900070401  # "Tauernallee Santisstrasse"
 ext_dir = 900070301  # U Alt-Mariendorf
 
-for i in range(100):
+lcd = lcddriver.lcd()
+
+
+i=0
+while True:
+#for i in range(100):
     # print("  - begin of loop ("+str(i)+"). Time: ", time.time() - t1)
     t_loop = time.time()
 
@@ -83,7 +89,7 @@ for i in range(100):
         # print("  - end of loop. Loop runtime =", time.time() - t_loop)
 
         now = datetime.datetime.now()
-        # print("now: ", now)
+        print("now: ", now)
         for i in range(min(4,len(nextDep))):
             iLine = nextDep[i]['line']['name']
             iDest = nextDep[i]['direction'][0:12]
@@ -98,8 +104,13 @@ for i in range(100):
             final_str = iLine.ljust(3) + " " + iDest.ljust(11) + " " + str(diffMin).rjust(2) + "'"
             print(final_str)
 
+            # send string to lcd display
+            print("send to lcd...")
+            lcd.lcd_display_string(final_str, i+1)
+
     except Exception as e:
         print(" - Error in Request:", e)
-    time.sleep(30)
+    time.sleep(60)
+    i=i+1
 
 print("end of script. Total runtime =", time.time() - t1)
