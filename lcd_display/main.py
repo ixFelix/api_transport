@@ -3,9 +3,11 @@ import time
 import datetime
 import numpy as np
 import xmltodict
-import lcddriver
+#import lcddriver
 
 t1 = time.time()
+INTERVALL = 60
+WORKTIME_HOURS = [[7, 10], [22,23]]
 
 baseurl = "https://v5.vbb.transport.rest/"
 urlending = "&accept=application/x-ndjson"
@@ -75,7 +77,7 @@ def nextDeparturesAtStop(name=False, ext=0, maxNo=3):
 ext = 900070401  # "Tauernallee Santisstrasse"
 ext_dir = 900070301  # U Alt-Mariendorf
 
-lcd = lcddriver.lcd()
+#lcd = lcddriver.lcd()
 
 
 i=0
@@ -83,12 +85,22 @@ while True:
 #for i in range(100):
     # print("  - begin of loop ("+str(i)+"). Time: ", time.time() - t1)
     t_loop = time.time()
+    now = datetime.datetime.now()
+
+    # chech for working hours. otherwise sleep for one intervall.
+    go=False
+    for worktime_i in range(len(WORKTIME_HOURS)):
+        if now.hour >= WORKTIME_HOURS[worktime_i][0] and now.hour < WORKTIME_HOURS[worktime_i][1]:
+            go=True
+    if not go:
+        print("no working hours. sleep for ", INTERVALL, "s.")
+        time.sleep(INTERVALL)
+        continue
 
     try:
         nextDep = nextDeparturesAtStop(ext=900070401, maxNo=4)
         # print("  - end of loop. Loop runtime =", time.time() - t_loop)
 
-        now = datetime.datetime.now()
         print("now: ", now)
         for i in range(min(4,len(nextDep))):
             iLine = nextDep[i]['line']['name']
@@ -110,7 +122,8 @@ while True:
 
     except Exception as e:
         print(" - Error in Request:", e)
-    time.sleep(60)
+    print("sleep for",INTERVALL, "s.")
+    time.sleep(INTERVALL)
     i=i+1
 
 print("end of script. Total runtime =", time.time() - t1)
