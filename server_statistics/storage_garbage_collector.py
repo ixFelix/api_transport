@@ -23,8 +23,6 @@ csvFiles = [(".csv" in f) for f in files_raw]
 files_raw = np.array(files_raw)[csvFiles]
 
 files_raw.sort()
-#print("all files")
-#print(files_raw)
 
 # collect ext and dir:
 ext_extDir_list = []
