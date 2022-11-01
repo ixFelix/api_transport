@@ -12,7 +12,7 @@ arguments = sys.argv
 if len(arguments) > 1:
     frequency = arguments[1]
 else:
-    frequency = "daily"
+    frequency = "hourly"
 
 path_files = os.path.join(path_wd, 'records/'+frequency)
 
@@ -23,8 +23,8 @@ csvFiles = [(".csv" in f) for f in files_raw]
 files_raw = np.array(files_raw)[csvFiles]
 
 files_raw.sort()
-print("all files")
-print(files_raw)
+#print("all files")
+#print(files_raw)
 
 # collect ext and dir:
 ext_extDir_list = []
@@ -35,16 +35,16 @@ for f_i in range(len(files_raw)):
         ext_extDir_list.append((ext.group(1), extDir.group(1)))
 
 stations = list(set([i for i in ext_extDir_list]))
-print("stations", stations)
+#print("stations", stations)
 
 # load all data for one station
 data =[]
-print(files_raw)
+#print(files_raw)
 for i in range(len(stations)):
     var = [((("s" + str(stations[i][0]) + "_sDir" + str(stations[i][1])) in f) & (".csv" in f)) for f in files_raw]
-    print(var)
+    #print(var)
     files = np.array(files_raw, dtype=str)[var]
-    print("files", files)
+    #print("files", files)
     data_station = []
     for f_i in range(len(files)):
         if len(files[f_i])>0:
@@ -59,10 +59,10 @@ for j in range(len(stations)):
     save_delete_station = []
     for i in range(len(data[j])-1):
         if len(data[j][i+1].merge(data[j][i], on=["time_plan", "rideID"])) == len(data[j][i]):
-            print(i, i+1, "correct")
+            #print(i, i+1, "correct")
             save_delete_station.append(True)
         else:
-            print(i, i+1, "error. no subset.")
+            #print(i, i+1, "error. no subset.")
             save_delete_station.append(False)
 
     if len(data[j]) >= 2:
@@ -82,13 +82,13 @@ for i in range(len(stations)):
         if save_delete_list[i][j]:
             delete_list_final.append(files[j])
 
-print("\n Final delete (might be empty):")
-[print(i) for i in delete_list_final]
+#print("\n Final delete (might be empty):")
+#[print(i) for i in delete_list_final]
 
 # move files in delete folder
 print("\n commands (might be empty):")
 for f in delete_list_final:
-    print(os.path.join(path_files,f), os.path.join(path_files,"trash",f))
-    #os.rename(os.path.join(path_files,f), os.path.join(path_files,"trash",f))
+    print("mv ",os.path.join(path_files,f), os.path.join(path_files,"trash",f))
+    os.rename(os.path.join(path_files,f), os.path.join(path_files,"trash",f))
 
 print(" -- End of script :) --")
