@@ -8,21 +8,19 @@ import pandas as pd
 import os
 
 #path_wd = os.getcwd()# + "\\server_statistics\\"
-path_wd = "/home/pi/work/api_transport/server_statistics/"
+#path_wd = "/home/pi/work/api_transport/server_statistics/"
 #path_wd = "D:\\implementations\\api_transport\\server_statistics\\"
+path_wd = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 t1 = time.time()
 now = datetime.datetime.now()
 print("================== start script (" + str(now) + ") =====================")
 
-ext1 = 900070401  # "Tauernallee Santisstrasse"
-ext_dir1 = 900070301  # U Alt-Mariendorf
-ext2 = 900003201  # "s+U Berlin Hauptbahnhof"
-ext_dir2 = False
-
-ext_list=[ext1, ext2]
-ext_dir_list=[ext_dir1, ext_dir2]
-data = [None, None]
+# "Tauernallee Santisstrasse", "s+U Berlin Hauptbahnhof",
+ext_list = [900070401, 900003201]
+# U Alt-Mariendorf, False,
+ext_dir_list = [900070301, False]
+data = [None for i in range(len(ext_list))]
 
 pd.set_option('display.max_columns', 9)
 
@@ -96,7 +94,7 @@ while True:
             # delete hourly and daily saves from time to time.
             print("found",len(nextDep),"results. Store them in csv. print first new data:")
             print(iTime, iLine, iDest,iDelay, iRideID)
-            data[station_i].to_csv(path_wd + "records/hourly/" + "s" + str(ext) + "_sDir" + str(ext_dir) + "_d" + str(now)[0:10] + "_h" + str(now)[11:13] + ".csv",sep=";")
+            #data[station_i].to_csv(path_wd + "records/hourly/" + "s" + str(ext) + "_sDir" + str(ext_dir) + "_d" + str(now)[0:10] + "_h" + str(now)[11:13] + ".csv",sep=";")
             #data.to_csv(path_wd + "records/daily/" + "s" + str(ext) + "_sDir" + str(ext_dir) + "_d" + str(now)[0:10] + ".csv",sep=";")
             # data.to_csv(path_wd + "records/monthly/" + "s" + str(ext) + "_sDir" + str(ext_dir) + "_d" + str(now)[0:7] + ".csv", sep=";")
 
