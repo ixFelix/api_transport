@@ -12,11 +12,16 @@ arguments = sys.argv
 if len(arguments) > 1:
     frequency = arguments[1]
 else:
-    frequency = "hourly"
+    frequency = "daily"
 
 path_files = os.path.join(path_wd, 'records/'+frequency)
 
 files_raw = os.listdir(path_files)
+
+# remove non-csv files (e.g. trash folder)
+csvFiles = [(".csv" in f) for f in files_raw]
+files_raw = np.array(files_raw)[csvFiles]
+
 files_raw.sort()
 print("all files")
 print(files_raw)
@@ -34,9 +39,12 @@ print("stations", stations)
 
 # load all data for one station
 data =[]
+print(files_raw)
 for i in range(len(stations)):
-    var = [((("s" + str(stations[i][0]) + "_sDir" + str(stations[i][1])) in f) & ("_h" in f) & (".csv" in f)) for f in files_raw]
+    var = [((("s" + str(stations[i][0]) + "_sDir" + str(stations[i][1])) in f) & (".csv" in f)) for f in files_raw]
+    print(var)
     files = np.array(files_raw, dtype=str)[var]
+    print("files", files)
     data_station = []
     for f_i in range(len(files)):
         if len(files[f_i])>0:
@@ -57,7 +65,8 @@ for j in range(len(stations)):
             print(i, i+1, "error. no subset.")
             save_delete_station.append(False)
 
-    save_delete_station[len(save_delete_station)-1] = False  # never deleted second-newest file
+    if len(data[j]) >= 2:
+        save_delete_station[len(save_delete_station) - 1] = False  # never deleted second-newest file
     save_delete_station.append(False)  # never delete newest file
     save_delete_list.append(save_delete_station)
 
@@ -65,7 +74,7 @@ for j in range(len(stations)):
 print("\n Delete? ")
 delete_list_final = []
 for i in range(len(stations)):
-    var = [((("s" + str(stations[i][0]) + "_sDir" + str(stations[i][1])) in f) & ("_h" in f) & (".csv" in f)) for f in files_raw]
+    var = [((("s" + str(stations[i][0]) + "_sDir" + str(stations[i][1])) in f) & (".csv" in f)) for f in files_raw]
     files = np.array(files_raw, dtype=str)[var]
 
     for j in range(len(files)):
@@ -73,14 +82,13 @@ for i in range(len(stations)):
         if save_delete_list[i][j]:
             delete_list_final.append(files[j])
 
-print("\n Final delete:")
+print("\n Final delete (might be empty):")
 [print(i) for i in delete_list_final]
 
 # move files in delete folder
+print("\n commands (might be empty):")
 for f in delete_list_final:
     print(os.path.join(path_files,f), os.path.join(path_files,"trash",f))
-    os.rename(os.path.join(path_files,f), os.path.join(path_files,"trash",f))
-#path_files = os.path.join(path_wd, 'records/hourly')
-#path_files_trash = os.path.join(path_files, '/trash/')
+    #os.rename(os.path.join(path_files,f), os.path.join(path_files,"trash",f))
 
 print(" -- End of script :) --")
