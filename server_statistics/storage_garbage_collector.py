@@ -2,18 +2,19 @@
 # I will leave the last 3 for security reasons.
 
 import os
+import sys
 import re
 import numpy as np
 import pandas as pd
 
-#path_wd = "/home/pi/work/api_transport/server_statistics/"
-#path_wd = "D:\\implementations\\api_transport\\server_statistics\\"
-path_wd = os.path.realpath(
-    os.path.join(os.getcwd(), os.path.dirname(__file__)))
+path_wd = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+arguments = sys.argv
+if len(arguments) > 1:
+    frequency = arguments[1]
+else:
+    frequency = "hourly"
 
-path_files = os.path.join(path_wd, 'records/hourly')
-
-#print(current_wd)
+path_files = os.path.join(path_wd, 'records/'+frequency)
 
 files_raw = os.listdir(path_files)
 files_raw.sort()
@@ -25,7 +26,8 @@ ext_extDir_list = []
 for f_i in range(len(files_raw)):
     ext = re.search('s(.*)_sDir', files_raw[f_i])
     extDir = re.search('sDir(.*)_d20', files_raw[f_i])
-    ext_extDir_list.append((ext.group(1), extDir.group(1)))
+    if ext is not None:
+        ext_extDir_list.append((ext.group(1), extDir.group(1)))
 
 stations = list(set([i for i in ext_extDir_list]))
 print("stations", stations)
@@ -34,9 +36,7 @@ print("stations", stations)
 data =[]
 for i in range(len(stations)):
     var = [((("s" + str(stations[i][0]) + "_sDir" + str(stations[i][1])) in f) & ("_h" in f) & (".csv" in f)) for f in files_raw]
-    #print("var", var)
     files = np.array(files_raw, dtype=str)[var]
-    #print(i, files)
     data_station = []
     for f_i in range(len(files)):
         if len(files[f_i])>0:
@@ -45,13 +45,11 @@ for i in range(len(stations)):
             print("no files found for this station!")
     data.append(data_station)
 
+# check whether each file is a subset of the next newer file (no data is lost in newer file)
 save_delete_list=[]
 for j in range(len(stations)):
     save_delete_station = []
     for i in range(len(data[j])-1):
-        # print(len(data[j][i+1]))
-        # print(len(data[j][i]))
-        # print(len(data[j][i+1].merge(data[j][i], on=["time_plan", "rideID"])))
         if len(data[j][i+1].merge(data[j][i], on=["time_plan", "rideID"])) == len(data[j][i]):
             print(i, i+1, "correct")
             save_delete_station.append(True)
@@ -63,13 +61,11 @@ for j in range(len(stations)):
     save_delete_station.append(False)  # never delete newest file
     save_delete_list.append(save_delete_station)
 
-#print(save_delete_list)
-
+# determine files to delete
 print("\n Delete? ")
 delete_list_final = []
 for i in range(len(stations)):
     var = [((("s" + str(stations[i][0]) + "_sDir" + str(stations[i][1])) in f) & ("_h" in f) & (".csv" in f)) for f in files_raw]
-    #print("var", var)
     files = np.array(files_raw, dtype=str)[var]
 
     for j in range(len(files)):
@@ -80,15 +76,11 @@ for i in range(len(stations)):
 print("\n Final delete:")
 [print(i) for i in delete_list_final]
 
+# move files in delete folder
+for f in delete_list_final:
+    print(os.path.join(path_files,f), os.path.join(path_files,"trash",f))
+    os.rename(os.path.join(path_files,f), os.path.join(path_files,"trash",f))
+#path_files = os.path.join(path_wd, 'records/hourly')
+#path_files_trash = os.path.join(path_files, '/trash/')
 
-
-"""print(len(data[0])
-
-print(data[1])
-#merged = \
-data[1].merge(data[0])
-print(data[1])
-#merged.drop_duplicates(keep="last", subset=["time_plan", "rideID"])
-#data[station_i] = data[station_i].drop_duplicates()  # , inplace=True)
-
-#print(len(merged))#"""
+print(" -- End of script :) --")

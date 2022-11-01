@@ -1,24 +1,19 @@
-import os.path
 import time
 import datetime
 import numpy as np
-# from server_statistics import api_handler
 import api_handler
 import pandas as pd
 import os
 
-#path_wd = os.getcwd()# + "\\server_statistics\\"
-#path_wd = "/home/pi/work/api_transport/server_statistics/"
-#path_wd = "D:\\implementations\\api_transport\\server_statistics\\"
 path_wd = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 t1 = time.time()
 now = datetime.datetime.now()
 print("================== start script (" + str(now) + ") =====================")
 
-# "Tauernallee Santisstrasse", "s+U Berlin Hauptbahnhof",
+# ["Tauernallee Santisstrasse", "s+U Berlin Hauptbahnhof", ...
 ext_list = [900070401, 900003201]
-# U Alt-Mariendorf, False,
+# ["U Alt-Mariendorf", False, ...
 ext_dir_list = [900070301, False]
 data = [None for i in range(len(ext_list))]
 
@@ -26,7 +21,7 @@ pd.set_option('display.max_columns', 9)
 
 # read data from earlier run and remove files that do not match ext, ext_dir, "_h" and ".csv"
 #files = os.listdir(path_wd + "\\records\\hourly\\")
-files_raw = os.listdir(path_wd + "/records/hourly/")
+files_raw = os.listdir(os.path.join(path_wd, "records/hourly/"))
 files_raw.sort()
 print("all files",files_raw)
 for station_i in range(len(data)):
@@ -36,7 +31,7 @@ for station_i in range(len(data)):
     print(station_i, files)
     if len(files)>0:
         #data = pd.read_csv(path_wd + "\\records\\hourly\\" + files[len(files) - 1], sep=";", index_col=0, dtype=str)
-        data[station_i] = pd.read_csv(path_wd + "/records/hourly/" + files[len(files) - 1], sep=";", index_col=0, dtype=str)
+        data[station_i] = pd.read_csv(os.path.join(path_wd, "records/hourly/", files[len(files) - 1]), sep=";", index_col=0, dtype=str)
     else:
         data[station_i] = pd.DataFrame()
 
@@ -94,9 +89,15 @@ while True:
             # delete hourly and daily saves from time to time.
             print("found",len(nextDep),"results. Store them in csv. print first new data:")
             print(iTime, iLine, iDest,iDelay, iRideID)
-            #data[station_i].to_csv(path_wd + "records/hourly/" + "s" + str(ext) + "_sDir" + str(ext_dir) + "_d" + str(now)[0:10] + "_h" + str(now)[11:13] + ".csv",sep=";")
-            #data.to_csv(path_wd + "records/daily/" + "s" + str(ext) + "_sDir" + str(ext_dir) + "_d" + str(now)[0:10] + ".csv",sep=";")
-            # data.to_csv(path_wd + "records/monthly/" + "s" + str(ext) + "_sDir" + str(ext_dir) + "_d" + str(now)[0:7] + ".csv", sep=";")
+            data[station_i].to_csv(os.path.join(
+                path_wd, "records/hourly/s" + str(ext) + "_sDir" + str(ext_dir) + "_d" + str(now)[0:10] + "_h" + str(now)[11:13] + ".csv"),
+                sep=";")
+            data[station_i].to_csv(os.path.join(
+                path_wd, "records/daily/" + "s" + str(ext) + "_sDir" + str(ext_dir) + "_d" + str(now)[0:10] + ".csv"),
+                sep=";")
+            data[station_i].to_csv(os.path.join(
+                path_wd, "records/monthly/" + "s" + str(ext) + "_sDir" + str(ext_dir) + "_d" + str(now)[0:7] + ".csv"),
+                sep=";")
 
         except Exception as e:
             print(" - Error in Request:", e)
