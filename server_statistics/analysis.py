@@ -40,8 +40,10 @@ for i in range(len(stations)):
 
 
 # print histogram
-i = 0
-data_station = data[i]
-f = plt.figure()
-plt.plot(data_station["time_plan"], data_station["delay"])
-f.savefig("plots/time_series.png", bbox_inches='tight')
+for i in range(len(stations)):
+    data_station = data[i]
+    f = plt.figure()
+    plt.plot(data_station["time_plan"], data_station["delay"])
+    save_file = "plots/time_series_s"+stations[i][0]+"_sDir"+stations[i][1]+".png"
+    print("saving", save_file)
+    f.savefig(save_file, bbox_inches='tight')
