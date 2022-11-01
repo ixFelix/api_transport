@@ -3,11 +3,11 @@ import time
 import datetime
 import numpy as np
 import xmltodict
-#import lcddriver
+import lcddriver
 
 t1 = time.time()
 INTERVALL = 60
-WORKTIME_HOURS = [[7, 10], [22,23]]
+WORKTIME_HOURS = [[7, 10]]
 
 baseurl = "https://v5.vbb.transport.rest/"
 urlending = "&accept=application/x-ndjson"
@@ -77,7 +77,7 @@ def nextDeparturesAtStop(name=False, ext=0, maxNo=3):
 ext = 900070401  # "Tauernallee Santisstrasse"
 ext_dir = 900070301  # U Alt-Mariendorf
 
-#lcd = lcddriver.lcd()
+lcd = lcddriver.lcd()
 
 
 i=0
