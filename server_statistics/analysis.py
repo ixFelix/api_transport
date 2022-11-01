@@ -32,7 +32,7 @@ for i in range(len(stations)):
     #print("files", files)
     file = os.path.join(path_files, files[len(files)-1])
     print("open", file)
-    data_station =pd.read_csv(file, sep=";", index_col=0, dtype={"line": np.str, "delay": np.int, "rideID": np.str})
+    data_station =pd.read_csv(file, sep=";", index_col=0, dtype={"line": str, "delay": int, "rideID": str})
     dates = [datetime.datetime.strptime(d[0:19], '%Y-%m-%dT%H:%M:%S') for d in data_station["time_plan"]]
     data_station["time_plan"] = dates
 
@@ -44,4 +44,4 @@ i = 0
 data_station = data[i]
 f = plt.figure()
 plt.plot(data_station["time_plan"], data_station["delay"])
-f.savefig("plots/time_series.pdf", bbox_inches='tight')
+f.savefig("plots/time_series.png", bbox_inches='tight')
