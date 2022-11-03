@@ -7,7 +7,7 @@ import lcddriver
 
 t1 = time.time()
 INTERVALL = 60
-WORKTIME_HOURS = [[7, 10]]
+WORKTIME_HOURS = [[7, 10],[19,21]]
 
 baseurl = "https://v5.vbb.transport.rest/"
 urlending = "&accept=application/x-ndjson"
@@ -94,6 +94,7 @@ while True:
             go=True
     if not go:
         print("no working hours. sleep for ", INTERVALL, "s.")
+        lcd.lcd_clear()
         time.sleep(INTERVALL)
         continue
 

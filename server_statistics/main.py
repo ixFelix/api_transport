@@ -39,7 +39,7 @@ j=0
 while True:
 #if True:
 #for j in range(100):
-    print("  - begin of loop (" + str(j) + "). Time: ", time.time() - t1)
+    print("  - begin of loop (" + str(j) + "). Time: ", time.time())
     t_loop = time.time()
 
     for station_i in range(len(ext_list)):
