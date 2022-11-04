@@ -10,7 +10,7 @@ path_wd = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 path_files = os.path.join(path_wd, 'records/hourly/')
 files_raw = os.listdir(path_files)
 
-print(files_raw)
+#print(files_raw)
 
 files_raw.sort()
 
