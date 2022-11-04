@@ -41,75 +41,122 @@ for i in range(len(stations)):
 
 
 # process data
-def findMode(mode_str):
+def findMode(mode_str, returnType="mode"):
+    # input: str of line, e.g.: "ICE 704"
+    # returnType can be: "mode" (returns str of mode), "col" (returns str of color)
     if mode_str[0] == "U":  # U-Bahn
-        return "U"
+        mode = "U"
+        col = "blue"
     elif mode_str[0] == "S":  # S-Bahn
-        return "S"
+        mode = "S"
+        col = "green"
     elif mode_str[0:2] == "RE":  # Regionaexpress
-        return "RE"
+        mode = "RE"
+        col = "red"
     elif mode_str[0:2] == "RB":  # Regionalbahn
-        return "RB"
+        mode = "RB"
+        col ="red"
     elif mode_str[0:2] == "IC":  # Intercity
-        return "IC"
+        mode = "IC"
+        col = "orange"
     elif mode_str[0:2] == "EC":  # Eurocity
-        return "EC"
+        mode = "EC"
+        col = "orange"
     elif mode_str[0:2] == "EN":  # Euronight
-        return "EN"
+        mode = "EN"
+        col = "orange"
     elif mode_str[0:2] == "NJ":  # Nightjet
-        return "NJ"
+        mode = "NJ"
+        col = "orange"
     elif mode_str[0:2] == "RJ":  # Railjet
-        return "RJ"
+        mode = "RJ"
+        col = "orange"
     elif len(mode_str) >= 3 and mode_str[0:3] == "FEX":  # Flughafenexpress
-        return "FEX"
+        mode = "FEX"
+        col = "red"
     elif len(mode_str) >= 3 and mode_str[0:3] == "FLX":  # Flixtrain
-        return "FLX"
+        mode = "FLX"
+        col = "orange"
     elif len(mode_str) >= 3 and mode_str[0:3] == "ICE":  # Intercity-Express
-        return "ICE"
+        mode = "ICE"
+        col = "orange"
     elif mode_str[0] == "M":  # Metro bus or metro tram
         if len(mode_str) == 2 or (len(mode_str) == 3 and mode_str[1:3] in [10, 13, 17]):
-            return ("MT")  # metro tram
+            mode = "MT"  # metro tram
+            col = "red"
         else:
-            return ("MB")  # metro bus
+            mode = "MB"  # metro bus
+            col = "purple"
     elif mode_str[0] == "N":
         if (len(mode_str) == 2 and mode_str[1].isnumeric()) or (len(mode_str) == 3 and mode_str[1:3].isnumeric()):
-            return ("NB")  # Night Bus
+            mode = "NB"  # Night Bus
+            col ="purple"
     elif len(mode_str) >= 3 and mode_str.isnumeric():  # Bus
-        return "B"
+        mode = "B"
+        col = "purple"
     elif mode_str[0] == "X":  # Express-Bus
-        return "XB"
+        mode = "XB"
+        col = "purple"
 
     else:
         print("found no mode for line", mode_str)
-        return "999"
+        mode = "999"
+        col = "grey"
 
-
+    if returnType=="mode":
+        return mode
+    elif returnType=="col":
+        return col
 findMode_vec = np.vectorize(findMode)
 
 for i in range(len(stations)):
     data_station = data[i]
     modes = findMode_vec(data_station["line"])
-    # add column to data frame
-    print(modes)
-
+    data_station.insert(6, "mode",modes) # add column to data frame
+    #print(modes)
     data[i] = data_station
 
-# print histogram
-fig = plt.figure()
-for i in range(len(stations)):
-    data_station = data[i]
 
-    ax = fig.add_subplot(2, 1, i + 1)
-    ax.plot(data_station["time_plan"], np.zeros(len(data_station)), c="black", linewidth=0.5)
-    ax.scatter(data_station["time_plan"], data_station["delay"], alpha=0.2, c="red")
-    if i == 0:
-        ax.set_xticklabels(())
-    # if i==1:
-    ax.margins(x=0)
-    plt.xticks(fontsize=10, rotation=45)
-fig.tight_layout()
+def plot_timeSeries():
+    fig = plt.figure()
+    for i in range(len(stations)):
+        data_station = data[i]
+        colors = findMode_vec(data_station["line"], returnType="col")
 
-if plot_pdf:
-    save_file = "plots/time_series_s" + stations[i][0] + "_sDir" + stations[i][1] + ".png"
-    print("saving", save_file)
-    fig.savefig(save_file, bbox_inches='tight')
+        ax = fig.add_subplot(2, 1, i + 1)
+        ax.plot(data_station["time_plan"], np.zeros(len(data_station)), c="black", linewidth=0.5)
+        ax.scatter(data_station["time_plan"], data_station["delay"], alpha=1, c=colors, s=0.1 )
+        if i == 0:
+            ax.set_xticklabels(())
+        # if i==1:
+        ax.margins(x=0)
+        plt.xticks(fontsize=10, rotation=45)
+    fig.tight_layout()
+
+    if plot_pdf:
+        save_file = "plots/time_series_s" + stations[i][0] + "_sDir" + stations[i][1] + ".png"
+        print("saving", save_file)
+        fig.savefig(save_file, bbox_inches='tight')
+
+def plot_histogram():
+    fig = plt.figure()
+    for i in range(len(stations)):
+        data_station = data[i]
+        ax = fig.add_subplot(2, 1, i + 1)
+        ax.hist(data_station["delay"], bins=20)
+    plt.show()
+
+def plot_delayVsHour():
+    fig = plt.figure()
+    for i in range(len(stations)):
+        data_station = data[i]
+        hours = [j.hour for j in data_station["time_plan"]]
+
+        ax = fig.add_subplot(2, 1, i + 1)
+        ax.scatter(hours, data_station["delay"])
+        # boxplot expects data=(ArrayHour1, ArrayHour2, ArrayHour3)
+    plt.show()
+
+#plot_timeSeries()
+#plot_histogram()
+plot_delayVsHour()
