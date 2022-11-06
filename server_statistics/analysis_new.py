@@ -111,9 +111,20 @@ findMode_vec = np.vectorize(findMode)
 
 for i in range(len(stations)):
     data_station = data[i]
+
     modes = findMode_vec(data_station["line"])
-    data_station.insert(6, "mode",modes) # add column to data frame
-    #print(modes)
+    data_station.insert(6, "mode", modes) # add column to data frame
+
+    dates = [i.date() for i in data_station["time_plan"]]
+    data_station.insert(7, "date", dates) # add column to data frame
+
+    hours = np.array([j.hour for j in data_station["time_plan"]])
+    data_station.insert(8, "hour", hours)
+
+    data[i] = data_station
+
+for i in range(len(stations)):
+    data_station = data[i]
     data[i] = data_station
 
 
@@ -150,13 +161,38 @@ def plot_delayVsHour():
     fig = plt.figure()
     for i in range(len(stations)):
         data_station = data[i]
-        hours = [j.hour for j in data_station["time_plan"]]
+        hours = np.array([j.hour for j in data_station["time_plan"]])
+        boxes = [(data_station[hours==h]["delay"]) for h in np.arange(24)]
 
-        ax = fig.add_subplot(2, 1, i + 1)
-        ax.scatter(hours, data_station["delay"])
-        # boxplot expects data=(ArrayHour1, ArrayHour2, ArrayHour3)
+
+        plt.subplot(2, 1, i + 1)
+        plt.plot(range(24), np.zeros(24), c="black", linewidth=0.5)
+        #ax.scatter(hours, data_station["delay"], alpha=0.1)
+        plt.boxplot(boxes, flierprops={'marker': '.', 'markersize': 5, 'alpha':0.5, 'fillstyle':"full"})
+        plt.text(1,40,"n="+str(len(data_station)))
+        plt.grid(axis="y", color="lightgrey")
+        ax = plt.gca()
+        ax.set_ylim([-5, 40])
+        ax.set_xlim([0.5, 24.5])
+
     plt.show()
+
+def plot_eventsPerHour():
+    fig = plt.figure()
+    for i in range(len(stations)):
+        data_station = data[i]
+        unique, counts = np.unique(hours, return_counts=True)
+        counts = data_station.value_counts(subset=["date","hour"])
+        print(counts)
+        # continue here!!!
+        exit(0)
+        date_unique, date_counts = np.unique(dates,return_counts=True)
+        plt.plot(unique, counts)
+        ax = plt.gca()
+        #ax.set_ylim([-5, 40])
+        ax.set_xlim([0, 24])
 
 #plot_timeSeries()
 #plot_histogram()
-plot_delayVsHour()
+#plot_delayVsHour()
+plot_eventsPerHour()
