@@ -57,6 +57,12 @@ class DelayData:
         self.add_date()
         self.add_hour()
 
+    def get_data(self, i=None):
+        if type(i) == type(None):
+            return self.data
+        else:
+            return self.data[i]
+
     def findMode_raw(self, mode_str, returnType="mode"):
         # input: str of line, e.g.: "ICE 704"
         # returnType can be: "mode" (returns str of mode), "col" (returns str of color)
@@ -136,7 +142,7 @@ class DelayData:
     def get_hours(self, subset_index=False):
         if "hour" not in self.data[0].keys():
             self.add_hour()
-        if subset_index:
+        if subset_index is not None:
             data_station = self.data[subset_index]
             return data_station["hour"]
         else:

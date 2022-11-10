@@ -16,7 +16,7 @@ delays = analysis.DelayData()
 delays.read_data(path_files, files_raw)
 delays.add_features()
 
-data = delays.data
+data = delays.get_data()
 
 
 def plot_timeSeries():
@@ -53,7 +53,7 @@ def plot_histogram():
 def plot_delayVsHour():
     fig = plt.figure()
     for i in range(delays.n):
-        data_station = data[i]
+        data_station = delays.get_data(i)# data[i]
         hours = delays.get_hours(i)  # np.array([j.hour for j in data_station["time_plan"]])
         boxes = [(data_station[hours == h]["delay"]) for h in np.arange(24)]
 
@@ -64,7 +64,7 @@ def plot_delayVsHour():
         plt.text(1, 40, "n=" + str(len(data_station)))
         plt.grid(axis="y", color="lightgrey")
         ax = plt.gca()
-        ax.set_ylim([-5, 40])
+        ax.set_ylim([-5, 10])
         ax.set_xlim([0.5, 24.5])
 
     plt.show()
