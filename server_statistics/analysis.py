@@ -96,6 +96,9 @@ class DelayData:
         elif len(mode_str) >= 3 and mode_str[0:3] == "FEX":  # Flughafenexpress
             mode = "FEX"
             col = "red"
+        elif len(mode_str) >= 3 and mode_str[0:3] == "HBX":  # Harz-Berlin-Express
+            mode = "HBX"
+            col = "red"
         elif len(mode_str) >= 3 and mode_str[0:3] == "FLX":  # Flixtrain
             mode = "FLX"
             col = "orange"

@@ -58,13 +58,13 @@ def plot_delayVsHour():
         boxes = [(data_station[hours == h]["delay"]) for h in np.arange(24)]
 
         plt.subplot(2, 1, i + 1)
-        plt.plot(range(24), np.zeros(24), c="black", linewidth=0.5)
+        plt.plot(range(24), np.zeros(24), c="grey", linewidth=0.5)
         # ax.scatter(hours, data_station["delay"], alpha=0.1)
-        plt.boxplot(boxes, flierprops={'marker': '.', 'markersize': 5, 'alpha': 0.5, 'fillstyle': "full"})
+        plt.boxplot(boxes, flierprops={'marker': '.', 'markersize': 5, 'alpha': 0.1, 'fillstyle': "full"})
         plt.text(1, 40, "n=" + str(len(data_station)))
         plt.grid(axis="y", color="lightgrey")
         ax = plt.gca()
-        ax.set_ylim([-5, 10])
+        ax.set_ylim([-5, 15])
         ax.set_xlim([0.5, 24.5])
 
     plt.show()
