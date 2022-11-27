@@ -4,7 +4,10 @@ echo "$now"
 
 
 cd /home/pi/work/projects/api_transport/server_statistics/
-python3 analysis.py
+
+########  NED NEW FILE FOR THAT TASK #########
+#####python3 analysis.py
+##############################################
 
 git config --global user.email "ident_green@posteo.de"
 git config --global user.name "ixFelix"
