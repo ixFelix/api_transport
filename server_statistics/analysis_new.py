@@ -50,11 +50,19 @@ def plot_histogram():
     plt.show()
 
 
-def plot_delayVsHour():
+def plot_delayVsHour(filter_mode=()):
     fig = plt.figure()
     for i in range(delays.n):
         data_station = delays.get_data(i)# data[i]
         hours = delays.get_hours(i)  # np.array([j.hour for j in data_station["time_plan"]])
+
+        # filter data by mode
+        """if len(filter_mode)>0:
+            modes = delays.get_mode(i)
+            filter_idx = [j in filter_mode for j in modes]
+            data_station.loc[filter_idx]
+            hours = hours.loc[filter_idx]"""
+
         boxes = [(data_station[hours == h]["delay"]) for h in np.arange(24)]
 
         plt.subplot(2, 1, i + 1)
@@ -101,5 +109,5 @@ def plot_eventsPerHour():
 
 #plot_timeSeries()
 #plot_histogram()
-plot_delayVsHour() # fix error in this method! after changing analysis data handler...
+plot_delayVsHour()#filter_mode=("B","BM","BX")) # fix error in this method! after changing analysis data handler...
 #plot_eventsPerHour() # test this method!

@@ -174,3 +174,10 @@ class DelayData:
             return data_station
 
         self.data = apply(self.data, add_hour_raw)
+
+    def get_mode(self, i=None):
+        data = self.get_data(i)
+        if i is None:
+            print("WARNING. get_mode does not work for i=None yet.")
+            exit()
+        return data["mode"]
