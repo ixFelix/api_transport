@@ -17,12 +17,20 @@ def vectorize(func, *kwargs):
 class DelayData:
     def __init__(self):
         self.data = None
+        self.data_copy = None
         self.stations = None  # contains ext and extDir
         self.n = 0
+        self.filter = None  # contains the filter information for each data (i)
+        self.meta = None
 
     def read_data(self, path_files, files_raw):
-        print(files_raw)
-        files_raw.sort()
+        if self.data is not None:
+            print("Data cannot be read twice!")
+            exit()
+
+        files_raw = sorted(files_raw)
+        #print(" Sorted files:", files_raw)
+
         # collect ext and dir:
         ext_extDir_list = []
         for f_i in range(len(files_raw)):
@@ -31,7 +39,8 @@ class DelayData:
             if ext is not None:
                 ext_extDir_list.append((ext.group(1), extDir.group(1)))
 
-        stations = list(set([i for i in ext_extDir_list]))
+        # stations = list(set([i for i in ext_extDir_list])) # Why do I need this? Problem: Changes the order arbitrary!
+        stations = ext_extDir_list
 
         # open all files
         data = []
@@ -49,19 +58,47 @@ class DelayData:
             data.append(data_station)
 
         self.data = data
+        self.data_copy = data
         self.stations = stations
         self.n = len(stations)
+        self.filter = [None for i in range(self.n)]
+        self.add_meta()
+
+    def set_filter(self, mode, subset_index=None):
+        print(" Set filter to data (subset_index =", subset_index, ") with mode=", mode)
+        """if mode is None:
+            print("analysis.set_mode(): no mode set.")
+            return None#"""
+        # print("This print is a problem to this function")
+        if subset_index is None:
+            use_sets = range(self.n)
+        else:
+            use_sets = [subset_index]
+        for i in use_sets:
+            modes = self.get_mode(i)
+            filter_idx = [j in mode for j in modes]
+            self.data[i] = self.data[i].loc[filter_idx]
+            self.filter[i] = mode
 
     def add_features(self):
         self.add_mode()
         self.add_date()
         self.add_hour()
 
-    def get_data(self, i=None):
-        if type(i) == type(None):
+    def add_meta(self):
+        # quick and dirty
+        names_dict = {'900003201': "Hauptbahnhof", '900070401': "Tauernallee/Saentisstrasse",
+                      '900070301': "U Alt-Mariendorf"}
+        print(" WARNING: Analysis.add_meta() not implemented yet.")
+
+    def get_data(self, subset_index=None, silent=False):
+        if any(j is not None for j in self.filter) and not silent:
+            # if self.filter is not None:
+            print(" Filters are set! Return filtered data. Filter:", self.filter)
+        if subset_index is None:
             return self.data
         else:
-            return self.data[i]
+            return self.data[subset_index]
 
     def findMode_raw(self, mode_str, returnType="mode"):
         # input: str of line, e.g.: "ICE 704"
@@ -142,7 +179,7 @@ class DelayData:
             data_station = self.data[subset_index]
         return self.findMode(data_station["line"], returnType="col")
 
-    def get_hours(self, subset_index=False):
+    def get_hours(self, subset_index=None):
         if "hour" not in self.data[0].keys():
             self.add_hour()
         if subset_index is not None:
@@ -176,8 +213,8 @@ class DelayData:
         self.data = apply(self.data, add_hour_raw)
 
     def get_mode(self, i=None):
-        data = self.get_data(i)
         if i is None:
-            print("WARNING. get_mode does not work for i=None yet.")
+            print("Error: get_mode does not work for i=None yet.")
             exit()
+        data = self.get_data(i, silent=True)
         return data["mode"]
