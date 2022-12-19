@@ -16,14 +16,14 @@ delays = analysis.DelayData()
 delays.read_data(path_files, files_raw)
 delays.add_features()
 
-data = delays.get_data()
+delays.get_data()
 
 
 def plot_timeSeries():
     fig = plt.figure()
     for i in range(delays.n):
         data_station = data[i]
-        colors = delays.findColor(subset_index= i)
+        colors = delays.findColor(subset_index=i)
 
         ax = fig.add_subplot(2, 1, i + 1)
         ax.plot(data_station["time_plan"], np.zeros(len(data_station)), c="black", linewidth=0.5)
@@ -50,30 +50,26 @@ def plot_histogram():
     plt.show()
 
 
-def plot_delayVsHour(filter_mode=()):
+def plot_delayVsHour(i=0, filter_mode=None):
     fig = plt.figure()
-    for i in range(delays.n):
-        data_station = delays.get_data(i)# data[i]
-        hours = delays.get_hours(i)  # np.array([j.hour for j in data_station["time_plan"]])
 
-        # filter data by mode
-        """if len(filter_mode)>0:
-            modes = delays.get_mode(i)
-            filter_idx = [j in filter_mode for j in modes]
-            data_station.loc[filter_idx]
-            hours = hours.loc[filter_idx]"""
+    # filter modes of transport:
+    if filter_mode is not None:
+        #print("start setting filters")
+        delays.set_filter(filter_mode)
+        #print("finished setting filters")
+    data_station = delays.get_data(subset_index=i)  # data[i]
+    hours = delays.get_hours(i)  # np.array([j.hour for j in data_station["time_plan"]])
 
-        boxes = [(data_station[hours == h]["delay"]) for h in np.arange(24)]
-
-        plt.subplot(2, 1, i + 1)
-        plt.plot(range(24), np.zeros(24), c="grey", linewidth=0.5)
-        # ax.scatter(hours, data_station["delay"], alpha=0.1)
-        plt.boxplot(boxes, flierprops={'marker': '.', 'markersize': 5, 'alpha': 0.1, 'fillstyle': "full"})
-        plt.text(1, 40, "n=" + str(len(data_station)))
-        plt.grid(axis="y", color="lightgrey")
-        ax = plt.gca()
-        ax.set_ylim([-5, 15])
-        ax.set_xlim([0.5, 24.5])
+    boxes = [(data_station[hours == h]["delay"]) for h in np.arange(24)]
+    plt.plot(range(24), np.zeros(24), c="grey", linewidth=0.5)
+    # ax.scatter(hours, data_station["delay"], alpha=0.1)
+    plt.boxplot(boxes, flierprops={'marker': '.', 'markersize': 5, 'alpha': 0.1, 'fillstyle': "full"})
+    plt.text(1, 40, "n=" + str(len(data_station)))
+    plt.grid(axis="y", color="lightgrey")
+    ax = plt.gca()
+    ax.set_ylim([-5, 15])
+    ax.set_xlim([0.5, 24.5])
 
     plt.show()
 
@@ -107,7 +103,17 @@ def plot_eventsPerHour():
         ax.set_xlim([0, 24])
 
 
-#plot_timeSeries()
-#plot_histogram()
-plot_delayVsHour()#filter_mode=("B","BM","BX")) # fix error in this method! after changing analysis data handler...
-#plot_eventsPerHour() # test this method!
+# plot_timeSeries()
+# plot_histogram()
+plot_delayVsHour(i=0, filter_mode=("ICE", "IC", "EC"))  # fix error in this method! after changing analysis data handler...
+# plot_eventsPerHour() # test this method!
+
+
+#run_glm(i=0)
+#def run_glm(i=0): #  ---------------------- create + debug function
+# generalized linear model
+"""data = delays.get_data(i)
+
+from sklearn.linear_model import LinearRegression
+glm = LinearRegression()
+glm.fit(data["delay"],delays.get_hours(i))"""
