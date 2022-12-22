@@ -33,11 +33,14 @@ class DelayData:
 
         # collect ext and dir:
         ext_extDir_list = []
+        self.meta = {"names":[], "ext":[], "dir":[]}
         for f_i in range(len(files_raw)):
             ext = re.search('s(.*)_sDir', files_raw[f_i])
             extDir = re.search('sDir(.*)_d20', files_raw[f_i])
             if ext is not None:
                 ext_extDir_list.append((ext.group(1), extDir.group(1)))
+                self.meta["ext"].append(ext.group(1))
+                self.meta["dir"].append(extDir.group(1))
 
         # stations = list(set([i for i in ext_extDir_list])) # Why do I need this? Problem: Changes the order arbitrary!
         stations = ext_extDir_list
@@ -62,14 +65,12 @@ class DelayData:
         self.stations = stations
         self.n = len(stations)
         self.filter = [None for i in range(self.n)]
-        self.add_meta()
+        self.add_names()
 
     def set_filter(self, mode, subset_index=None):
         print(" Set filter to data (subset_index =", subset_index, ") with mode=", mode)
-        """if mode is None:
-            print("analysis.set_mode(): no mode set.")
-            return None#"""
-        # print("This print is a problem to this function")
+        if type(mode)==str: # if only one mode is provided
+            mode = [mode]
         if subset_index is None:
             use_sets = range(self.n)
         else:
@@ -85,11 +86,15 @@ class DelayData:
         self.add_date()
         self.add_hour()
 
-    def add_meta(self):
-        # quick and dirty
+    def add_names(self):
+        if self.meta is None or self.n==0:
+            exit("Wrong order of initialization in analysis.py")
+        # quick and dirty. Better store and read it or use api to get names
         names_dict = {'900003201': "Hauptbahnhof", '900070401': "Tauernallee/Saentisstrasse",
                       '900070301': "U Alt-Mariendorf"}
-        print(" WARNING: Analysis.add_meta() not implemented yet.")
+        for i in range(self.n):
+            name_here = names_dict[self.meta["ext"][i]]
+            self.meta["names"].append(name_here)
 
     def get_data(self, subset_index=None, silent=False):
         if any(j is not None for j in self.filter) and not silent:
@@ -99,6 +104,13 @@ class DelayData:
             return self.data
         else:
             return self.data[subset_index]
+
+    def get_name(self, subset_index=None):
+        if subset_index is None:
+            return_index = range(self.n)
+        else:
+            return_index = subset_index
+        return self.meta["names"][return_index]
 
     def findMode_raw(self, mode_str, returnType="mode"):
         # input: str of line, e.g.: "ICE 704"
