@@ -51,13 +51,8 @@ def plot_histogram():
 
 
 def plot_delayVsHour(i=0, filter_mode=None):
-    fig = plt.figure()
+    # fig = plt.figure()
 
-    # filter modes of transport:
-    if filter_mode is not None:
-        #print("start setting filters")
-        delays.set_filter(filter_mode)
-        #print("finished setting filters")
     data_station = delays.get_data(subset_index=i)  # data[i]
     hours = delays.get_hours(i)  # np.array([j.hour for j in data_station["time_plan"]])
 
@@ -74,46 +69,41 @@ def plot_delayVsHour(i=0, filter_mode=None):
     plt.show()
 
 
-def plot_eventsPerHour():
-    fig = plt.figure()
-    for i in range(delays.n):
-        data_station = data[i]
-        # hours = stats.get_hours(i) #np.array([j.hour for j in data_station["time_plan"]])
-        hours = data[i]["hour"]
-        unique, counts = np.unique(hours, return_counts=True)
-        hour_counts = data_station.value_counts(subset=["date", "hour"])
+def plot_eventsPerHour(i=0):
+    # fig = plt.figure()
+    hours = delays.get_hours(subset_index=i)
+    unique, counts = np.unique(hours, return_counts=True)
+    plt.plot(np.append(unique, 24), np.append(counts, counts[0]), label=delays.get_name(subset_index=i))
+    plt.title("Events per hour in " + delays.get_name(i))
+    ax = plt.gca()
+    ax.set_ylim([0, max(counts) * 1.1])
+    ax.set_xlim([0, 24])
 
-        # x and y are working, but sorting algo not.
-        x = [n[0] for n in hour_counts.keys()]
-        y = [n[1] for n in hour_counts.keys()]
-        # order_x = np.argsort(hour_counts)
-        x
-        y
 
-        plt.plot(x, y)
-        plt.show()
+# delays.set_filter(("ICE", "IC", "EC"))
+delays.set_filter(["MB"])
 
-        # print(counts)
-        # continue here!!!
-        date_unique, date_counts = np.unique(data[i]["date"], return_counts=True)
-        plt.plot(date_unique, date_counts)
-        plt.plot(unique, counts)
-        ax = plt.gca()
-        # ax.set_ylim([-5, 40])
-        ax.set_xlim([0, 24])
-
+i = 1
 
 # plot_timeSeries()
 # plot_histogram()
-plot_delayVsHour(i=0, filter_mode=("ICE", "IC", "EC"))  # fix error in this method! after changing analysis data handler...
-# plot_eventsPerHour() # test this method!
+plot_delayVsHour(i)  # fix error in this method! after changing analysis data handler...
+# plot_eventsPerHour(i)  # test this method!
+plt.show()
 
-
-#run_glm(i=0)
-#def run_glm(i=0): #  ---------------------- create + debug function
+# run_glm(i=0)
+# def run_glm(i=0): #  ---------------------- create + debug function
 # generalized linear model
-"""data = delays.get_data(i)
 
 from sklearn.linear_model import LinearRegression
+
 glm = LinearRegression()
-glm.fit(data["delay"],delays.get_hours(i))"""
+y = np.array(delays.get_data(i)["delay"]).reshape(-1, 1)
+x = np.array(delays.get_hours(i)).reshape(-1, 1)
+fit = glm.fit(y, x)
+print("y =", fit.intercept_[0], "+", fit.coef_[0][0], "x")
+plt.plot(x, y, marker="o", linestyle="")
+x_plot = np.arange(0,24)
+y_plot = fit.intercept_[0] + x_plot * fit.coef_[0][0]
+plt.plot(x_plot, y_plot)
+plt.show()
