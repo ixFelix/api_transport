@@ -62,6 +62,8 @@ def plot_delayVsHour(i=0, filter_mode=None):
     plt.boxplot(boxes, flierprops={'marker': '.', 'markersize': 5, 'alpha': 0.1, 'fillstyle': "full"})
     plt.text(1, 40, "n=" + str(len(data_station)))
     plt.grid(axis="y", color="lightgrey")
+    plt.xlabel("Hour")
+    plt.ylabel("Delay")
     ax = plt.gca()
     ax.set_ylim([-5, 15])
     ax.set_xlim([0.5, 24.5])
@@ -70,31 +72,34 @@ def plot_delayVsHour(i=0, filter_mode=None):
 
 
 def plot_eventsPerHour(i=0):
-    # fig = plt.figure()
+    fig = plt.figure()
     hours = delays.get_hours(subset_index=i)
     unique, counts = np.unique(hours, return_counts=True)
     plt.plot(np.append(unique, 24), np.append(counts, counts[0]), label=delays.get_name(subset_index=i))
-    plt.title("Events per hour in " + delays.get_name(i))
+    plt.legend()
     ax = plt.gca()
+    plt.xlabel("Hour")
+    plt.ylabel("# Events")
     ax.set_ylim([0, max(counts) * 1.1])
     ax.set_xlim([0, 24])
 
 
-# delays.set_filter(("ICE", "IC", "EC"))
-delays.set_filter(["MB"])
+delays.set_filter(("ICE", "IC", "EC"))
+#delays.set_filter(["MB"])
 
-i = 1
+i = 0
 
 # plot_timeSeries()
 # plot_histogram()
 plot_delayVsHour(i)  # fix error in this method! after changing analysis data handler...
-# plot_eventsPerHour(i)  # test this method!
+plot_eventsPerHour(i)  # test this method!
 plt.show()
 
 # run_glm(i=0)
 # def run_glm(i=0): #  ---------------------- create + debug function
 # generalized linear model
 
+fig = plt.figure()
 from sklearn.linear_model import LinearRegression
 
 glm = LinearRegression()
@@ -106,4 +111,4 @@ plt.plot(x, y, marker="o", linestyle="")
 x_plot = np.arange(0,24)
 y_plot = fit.intercept_[0] + x_plot * fit.coef_[0][0]
 plt.plot(x_plot, y_plot)
-plt.show()
+#plt.show()
