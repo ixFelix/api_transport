@@ -7,7 +7,7 @@ import lcddriver
 
 t1 = time.time()
 INTERVALL = 60
-WORKTIME_HOURS = [[7, 12],[20,23]]
+WORKTIME_HOURS = [[7, 23]]
 
 baseurl = "https://v5.vbb.transport.rest/"
 urlending = "&accept=application/x-ndjson"
