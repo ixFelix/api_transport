@@ -45,7 +45,11 @@ for i in range(len(stations)):
     #print("files", files)
     data_station = []
     for f_i in range(len(files)):
-        if len(files[f_i])>0:
+        filesize = os.path.getsize(os.path.join(path_files, files[f_i]))
+        if len(files[f_i])>0 and filesize>10:
+            print(os.path.join(path_files, files[f_i]))
+            print(filesize)
+            
             data_station.append(pd.read_csv(os.path.join(path_files, files[f_i]), sep=";", index_col=0, dtype=str))
         else:
             print("no files found for this station!")
