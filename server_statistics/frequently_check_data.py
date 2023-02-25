@@ -40,7 +40,7 @@ def register_scopes():
         with open('token.json', 'w') as token:
             token.write(creds.to_json())
 
-#register_scopes()
+register_scopes()
 
 def gmail_send_message(recipient=None, subject=None, message_text=None):
     """Create and send an email message
@@ -89,6 +89,6 @@ def gmail_send_message(recipient=None, subject=None, message_text=None):
     return send_message
 
 
-subject = "Test-E-mail"
+subject = "Test-E-mail2"
 message_text = "Diese email wurde automatisch versendet."
 gmail_send_message(subject=subject, message_text=message_text)
