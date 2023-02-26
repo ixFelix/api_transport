@@ -81,14 +81,14 @@ def send_message(to=None, subject=None, message_text=None):
 
         print("Successfully sent email with subject:", message["Subject"])
     except HttpError as error:
-        print(F'An error occurred: {error}')
+        print("An error occurred:", error)
         send_message = None
     return send_message
 
 # ------ tutorial ------
 
 # do once for the first time.
-#register_scopes()
+register_scopes()
 
 # send an email with subject and message
 #subject = "Test-E-mail2"

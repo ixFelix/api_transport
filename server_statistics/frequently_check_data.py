@@ -19,13 +19,18 @@ newest2 = files_raw[order[[-1, -2]]]
 report = ""
 
 # ------- check their size --------
+print("check sizes")
 sizes = np.array([os.path.getsize(os.path.join(path_files, i)) for i in newest2])
+print("sizes:", sizes)
 if any(sizes < size_threshold):
     idx = np.where(sizes < size_threshold)[0][0]
     report += "\n - At least one file is smaller than " + str(size_threshold) + ". That is suspicious. File=" +\
               str(files_raw[idx])
+else:
+    print("... sizes ok.")
 
 # -------- check time --------
+print("check time")
 try:
     now = datetime.datetime.now()
     nowH = now.hour
@@ -40,19 +45,16 @@ try:
                          ", h=" + str(h) + ", nowH=" + str(nowH)
 except:
     report += "\n - general problem in frequently_check_data.py --> check time"
+else:
+    print("... times ok.")
+
+
+# ------ handle report sending -------
 
 print(report)
-# nowH 5, h 3 not ok!
-# nowH 5, h 4 ok
-# nowH 5, h 5 ok
-# nowH 5, h 6 not ok!
-
-# nowH 0, h 22 not ok!
-# nowH 0, h 23 ok
-# nowH 0, h 0 ok
-# nowH 0, h 1 not ok
-
-
-subject = "Report of problem in api_transport"
-message_text = report
-email.send_message(subject=subject, message_text=message_text, to="ident_green@posteo.de")
+if len(report) == 0:
+    print("Everything is fine. Nothing to report. No email sent.")
+else:
+    subject = "Report of problem in api_transport"
+    message_text = report
+    email.send_message(subject=subject, message_text=message_text, to="ident_green@posteo.de")
