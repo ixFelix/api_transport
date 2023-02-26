@@ -5,6 +5,7 @@ import datetime
 
 number_stations = 2  # number of stations
 size_threshold = 1000  # report when one of  newest file is smaller
+send_mail_switch = True
 
 # get filenames
 path_wd = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
@@ -21,11 +22,12 @@ report = ""
 # ------- check their size --------
 print("check sizes")
 sizes = np.array([os.path.getsize(os.path.join(path_files, i)) for i in newest2])
-print("sizes:", sizes)
+print("... sizes:", sizes)
 if any(sizes < size_threshold):
     idx = np.where(sizes < size_threshold)[0][0]
     report += "\n - At least one file is smaller than " + str(size_threshold) + ". That is suspicious. File=" +\
-              str(files_raw[idx])
+              str(newest2[idx])
+    print("... problem in sizes. see report.")
 else:
     print("... sizes ok.")
 
@@ -57,4 +59,5 @@ if len(report) == 0:
 else:
     subject = "Report of problem in api_transport"
     message_text = report
-    email.send_message(subject=subject, message_text=message_text, to="ident_green@posteo.de")
+    if send_mail_switch:
+        email.send_message(subject=subject, message_text=message_text, to="ident_green@posteo.de")

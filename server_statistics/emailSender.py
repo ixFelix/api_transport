@@ -88,7 +88,7 @@ def send_message(to=None, subject=None, message_text=None):
 # ------ tutorial ------
 
 # do once for the first time.
-register_scopes()
+# register_scopes()
 
 # send an email with subject and message
 #subject = "Test-E-mail2"
