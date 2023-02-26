@@ -1,94 +1,58 @@
-import os.path
-import base64
+import emailSender as email
+import numpy as np
+import os
+import datetime
 
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
-from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
-from email.message import EmailMessage
+number_stations = 2  # number of stations
+size_threshold = 1000  # report when one of  newest file is smaller
 
+# get filenames
+path_wd = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+path_files = os.path.join(path_wd, 'records/hourly/')
+files_raw = np.array(os.listdir(path_files))
 
-my_email = "development.notify.me@gmail.com"
-path_credentials = "D:\\implementations\\api_transport\\server_statistics\\credentials.json"
-recipient_email = "ident_green@posteo.de"
+# get two newest files:
+times = np.array([os.path.getctime(os.path.join(path_files, f)) for f in files_raw])
+order = np.argsort(times)
+newest2 = files_raw[order[[-1, -2]]]
 
-# If modifying these scopes, delete the file token.json.
-SCOPES_register = ['https://www.googleapis.com/auth/gmail.compose']
-SCOPES_use = SCOPES_register #['https://www.googleapis.com/auth/gmail.compose']
+report = ""
 
+# ------- check their size --------
+sizes = np.array([os.path.getsize(os.path.join(path_files, i)) for i in newest2])
+if any(sizes < size_threshold):
+    idx = np.where(sizes < size_threshold)[0][0]
+    report += "\n - At least one file is smaller than " + str(size_threshold) + ". That is suspicious. File=" +\
+              str(files_raw[idx])
 
-def register_scopes():
-    # do that for the first time to allow access to gmail account to send emails (or other SCOPES).
-    # acces information is stored in token.json
-
-    creds = None
-    # The file token.json stores the user's access and refresh tokens, and is
-    # created automatically when the authorization flow completes for the first
-    # time.
-    if os.path.exists('token.json'):
-        creds = Credentials.from_authorized_user_file('token.json', SCOPES_register)
-    # If there are no (valid) credentials available, let the user log in.
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
+# -------- check time --------
+try:
+    now = datetime.datetime.now()
+    nowH = now.hour
+    for i in range(number_stations):
+        if newest2[i][-7:-6] != "h":
+            report += "\n - error in name of newest file, 'h' not found. File=" + \
+                     str(newest2[i]) + ", nowH=" + str(nowH)
         else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                path_credentials, SCOPES_register)
-            creds = flow.run_local_server(port=0)
-        # Save the credentials for the next run
-        with open('token.json', 'w') as token:
-            token.write(creds.to_json())
+            h = int(newest2[i][-6:-4])
+            if not (nowH == h or nowH == (h + 1) % 24):
+                report += "\n - newest file is older than 1 hour. File=" + str(newest2[i]) + \
+                         ", h=" + str(h) + ", nowH=" + str(nowH)
+except:
+    report += "\n - general problem in frequently_check_data.py --> check time"
 
-register_scopes()
+print(report)
+# nowH 5, h 3 not ok!
+# nowH 5, h 4 ok
+# nowH 5, h 5 ok
+# nowH 5, h 6 not ok!
 
-def gmail_send_message(recipient=None, subject=None, message_text=None):
-    """Create and send an email message
-    Print the returned  message id
-    Returns: Message object, including message id
-
-    Load pre-authorized user credentials from the environment.
-    TODO(developer) - See https://developers.google.com/identity
-    for guides on implementing OAuth2 for the application.
-    """
-    if recipient is None:
-        recipient = recipient_email
-    if subject is None:
-        subject = "Automated draft"
-    if message_text is None:
-        message_text = "'This is automated draft mail'"
-
-    #creds, _ = google.auth.default()
-    creds = Credentials.from_authorized_user_file('token.json', SCOPES_use)
-
-    try:
-        service = build('gmail', 'v1', credentials=creds)
-        message = EmailMessage()
-
-        message.set_content(message_text)
-
-        message['To'] = recipient
-        message['From'] = my_email
-        message['Subject'] = subject
-
-        # encoded message
-        encoded_message = base64.urlsafe_b64encode(message.as_bytes()) \
-            .decode()
-
-        create_message = {
-            'raw': encoded_message
-        }
-        # pylint: disable=E1101
-        send_message = (service.users().messages().send
-                        (userId="me", body=create_message).execute())
-        print("Message probably successfully sent.")
-        print(F'Message Id: {send_message["id"]}')
-    except HttpError as error:
-        print(F'An error occurred: {error}')
-        send_message = None
-    return send_message
+# nowH 0, h 22 not ok!
+# nowH 0, h 23 ok
+# nowH 0, h 0 ok
+# nowH 0, h 1 not ok
 
 
-subject = "Test-E-mail2"
-message_text = "Diese email wurde automatisch versendet."
-gmail_send_message(subject=subject, message_text=message_text)
+subject = "Report of problem in api_transport"
+message_text = report
+email.send_message(subject=subject, message_text=message_text, to="ident_green@posteo.de")
