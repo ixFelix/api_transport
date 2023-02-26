@@ -3,3 +3,4 @@ berlin/OpenVBB/data_storage/*
 */.ipynb_checkpoints/*
 *.pyc
 server_statistics/records/*/trash/*
+*/*credentials.json*
