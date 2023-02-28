@@ -25,7 +25,7 @@ sizes = np.array([os.path.getsize(os.path.join(path_files, i)) for i in newest2]
 print("... sizes:", sizes)
 if any(sizes < size_threshold):
     idx = np.where(sizes < size_threshold)[0][0]
-    report += "\n - At least one file is smaller than " + str(size_threshold) + ". That is suspicious. File=" +\
+    report += "\n - At least one file is smaller than " + str(size_threshold) + ". That is suspicious. File=" + \
               str(newest2[idx])
     print("... problem in sizes. see report.")
 else:
@@ -35,30 +35,33 @@ else:
 print("check time")
 try:
     now = datetime.datetime.now()
+    print("now: ", now)
     nowH = now.hour
     for i in range(number_stations):
         if newest2[i][-7:-6] != "h":
             report += "\n - error in name of newest file, 'h' not found. File=" + \
-                     str(newest2[i]) + ", nowH=" + str(nowH)
+                      str(newest2[i]) + ", nowH=" + str(nowH)
         else:
             h = int(newest2[i][-6:-4])
             if not (nowH == h or nowH == (h + 1) % 24):
                 report += "\n - newest file is older than 1 hour. File=" + str(newest2[i]) + \
-                         ", h=" + str(h) + ", nowH=" + str(nowH)
+                          ", h=" + str(h) + ", nowH=" + str(nowH)
 except:
     report += "\n - general problem in frequently_check_data.py --> check time"
 else:
     print("... times ok.")
 
-
 # ------ handle report sending -------
 
 subject = "Report of problem in api_transport"
 
-
 # debug. always send email.
 # email.send_message(subject=subject, message_text=report, to="ident_green@posteo.de")
 # end of debug
+
+if now.hour == 0 and now.day % 2 == 0:
+    if send_mail_switch:
+        email.send_message(subject="regular test mail", message_text="everything seems ok.", to="ident_green@posteo.de")
 
 print(report)
 if len(report) == 0:
