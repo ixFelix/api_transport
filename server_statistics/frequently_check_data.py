@@ -53,11 +53,16 @@ else:
 
 # ------ handle report sending -------
 
+subject = "Report of problem in api_transport"
+
+
+# debug. always send email.
+# email.send_message(subject=subject, message_text=report, to="ident_green@posteo.de")
+# end of debug
+
 print(report)
 if len(report) == 0:
     print("Everything is fine. Nothing to report. No email sent.")
 else:
-    subject = "Report of problem in api_transport"
-    message_text = report
     if send_mail_switch:
-        email.send_message(subject=subject, message_text=message_text, to="ident_green@posteo.de")
+        email.send_message(subject=subject, message_text=report, to="ident_green@posteo.de")

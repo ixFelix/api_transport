@@ -56,7 +56,7 @@ def send_message(to=None, subject=None, message_text=None):
         message_text = "'This is automated draft mail'"
 
     #creds, _ = google.auth.default()
-    creds = Credentials.from_authorized_user_file('token.json', SCOPES_use)
+    creds = Credentials.from_authorized_user_file('/home/pi/work/projects/api_transport/server_statistics/token.json', SCOPES_use)
 
     try:
         service = build('gmail', 'v1', credentials=creds)
