@@ -4,16 +4,18 @@ import datetime
 import numpy as np
 import xmltodict
 
-use_lcd = True # for debugging. False on pc, true on raspberry
+use_lcd = True  # for debugging. False on pc, true on raspberry
 
 if use_lcd:
     import lcddriver
+
     lcd = lcddriver.lcd()
 
 # debug. To undebug, remove all ## before lcd
 
 t1 = time.time()
 INTERVALL = 30
+INTERVAL_owm = 60*10  # 10 min temporal resolution of model
 WORKTIME_HOURS = [[7, 23]]
 
 baseurl = "https://v6.vbb.transport.rest/"
@@ -76,11 +78,32 @@ def api_vbb(command, param={}):
         return responseToDict(response_xml)
 
 
-def api_owm():
+last_request = ""
+
+
+def api_owm(check_interval=True):
     # openweathermap
+    # if old is given, check interval
+    global last_request
+    if check_interval and isinstance(last_request, datetime.date):
+        now = datetime.datetime.now()
+        time_since_last_request = (now - last_request).seconds  # in minutes
+        if time_since_last_request < INTERVAL_owm:
+            print("wait until", INTERVAL_owm/60, "min have passed. (Currently", time_since_last_request/60, ")")
+            return "stalling"
+        else:
+            print(INTERVAL_owm/60, "minutes have passed. Continue weather request.")
+    else:
+        print("Either check_interval is not requested or this is the first request. Continue weather request.")
+
+        # check interval and return old, if necessary
+
+    # else continue:
     url = "http://api.openweathermap.org/data/2.5/forecast?lat=52.4385&lon=13.3927&units=metric&appid" \
           "=09638815cd6e1c6a51e023f776f021ce"
     response = openWebsite(url)
+    last_request = datetime.datetime.now()
+
     if len(response) > 0:
         return responseToDict(response)
     else:
@@ -112,8 +135,8 @@ def nextDeparturesAtStop(name=False, ext=0, maxNo=3):
 ext = 900070401  # "Tauernallee Santisstrasse"
 ext_dir = 900070301  # U Alt-Mariendorf
 
-
 i = 0
+weather = "not requested"
 
 while True:
     # for i in range(100):
@@ -130,12 +153,13 @@ while True:
         print("no working hours. sleep for ", INTERVALL, "s.")
         if use_lcd:
             lcd.lcd_clear()
+            lcd.lcd_display_string("Good Night :)", 1)
         time.sleep(INTERVALL)
         continue
 
-    nextDep = nextDeparturesAtStop(ext=900070401, maxNo=4)
-    #nextDep = ""
-    weather = api_owm()
+    # nextDep = nextDeparturesAtStop(ext=900070401, maxNo=4)
+    nextDep = ""
+    weather = api_owm(check_interval=True)
 
     # -------- handle lines 1,2,3 (departures) --------
     print("Handle lines 1,2,3 (departures")
@@ -155,41 +179,43 @@ while True:
                 diffMin = iWait.seconds // 60
 
             final_str = iLine.ljust(3) + " " + iDest.ljust(11) + " " + str(diffMin).rjust(2) + "'"
-            print("lcd line "+str(i)+": "+final_str)
+            print(" lcd line " + str(i) + ": " + final_str)
 
             # send string to lcd display
             if use_lcd:
                 print("send to lcd...")
-                lcd.lcd_display_string(final_str, i+1)
+                lcd.lcd_display_string(final_str, i + 1)
     else:
         final_str = "no response (vbb)"
-        print("lcd line 1,2,3:", final_str)
+        print(" lcd line 1,2,3:", final_str)
         if use_lcd:
-            [lcd.lcd_display_string(final_str, i+1) for i in range(3)]
+            [lcd.lcd_display_string(final_str, i + 1) for i in range(3)]
 
     # handle third line (weather)
     print("handle line 4 (weather)")
-    if len(weather) > 0:
+    if len(weather) == 0:
+        final_str = "no response (owm)"
+        print(" lcd line 4: " + final_str)
+    elif weather == "stalling":
+        print("stalling in writing process.")
+    else:
         # 3 hour time steps (max 8 per day)
         n_timeSteps = len(weather['list'])
         epochs = [weather['list'][i]['dt'] for i in range(n_timeSteps)]
         datetime_dayOfMonth = [datetime.datetime.fromtimestamp(epochs[i]).day for i in range(n_timeSteps)]
-        if now.hour<22:
+        if now.hour < 22:
             dayDelay = 0
         else:
             dayDelay = 1
-        idxs = np.where(np.array(datetime_dayOfMonth) == now.day+dayDelay)[0]
+        idxs = np.where(np.array(datetime_dayOfMonth) == now.day + dayDelay)[0]
         temp_dayMax = max([weather['list'][i]["main"]["temp_max"] for i in idxs])
-        temp_next =        weather['list'][0]["main"]["temp_max"]
+        temp_next = weather['list'][0]["main"]["temp_max"]
         pop_dayMax = max([weather['list'][i]["pop"] for i in idxs])
-        final_str = "T:"+str(round(temp_next))+", Tm:"+str(round(temp_dayMax))+", pr:"+str(round(pop_dayMax*100))+"%"
-        print("lcd line 4: " + final_str)
+        final_str = "T:" + str(round(temp_next)) + ", Tm:" + str(round(temp_dayMax)) + ", pr:" + str(
+            round(pop_dayMax * 100)) + "%" + ("'" if dayDelay == 1 else "")
+        print(" lcd line 4: " + final_str)
         if use_lcd:
             lcd.lcd_display_string(final_str, 4)
-    else:
-        final_str = "no response (owm)"
-        print("lcd line 4: " + final_str)
-
 
     print("sleep for", INTERVALL, "s.")
     time.sleep(INTERVALL)
