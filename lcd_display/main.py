@@ -4,7 +4,7 @@ import datetime
 import numpy as np
 import xmltodict
 
-use_lcd = False # for debugging. False on pc, true on raspberry
+use_lcd = True # for debugging. False on pc, true on raspberry
 
 if use_lcd:
     import lcddriver
