@@ -59,8 +59,9 @@ subject = "Report of problem in api_transport"
 # email.send_message(subject=subject, message_text=report, to="ident_green@posteo.de")
 # end of debug
 
-if now.hour == 0 and now.day % 2 == 0:
+if now.hour == 18: # and now.day % 2 == 0:
     if send_mail_switch:
+        print("send regular test mail")
         email.send_message(subject="regular test mail", message_text="everything seems ok.", to="ident_green@posteo.de")
 
 print(report)
