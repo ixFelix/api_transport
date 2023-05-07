@@ -4,7 +4,7 @@ import datetime
 import numpy as np
 import xmltodict
 
-use_lcd = True # for debugging. False on pc, true on raspberry
+use_lcd = False # for debugging. False on pc, true on raspberry
 
 if use_lcd:
     import lcddriver
@@ -13,7 +13,7 @@ if use_lcd:
 # debug. To undebug, remove all ## before lcd
 
 t1 = time.time()
-INTERVALL = 60
+INTERVALL = 30
 WORKTIME_HOURS = [[7, 23]]
 
 baseurl = "https://v6.vbb.transport.rest/"
@@ -66,11 +66,14 @@ def api_vbb(command, param={}):
         return address
 
     response_xml = openWebsite(vbb_createAdress(command, param))
-    if len(response_xml) > 0:
-        return responseToDict(response_xml)
-    else:
-        print("Warning: response is empty.")
+    if response_xml is None:
+        print("Warning: response is empty (None).")
         return ""
+    if len(response_xml) == 0:
+        print("Warning: response is empty (len 0).")
+        return ""
+    else:
+        return responseToDict(response_xml)
 
 
 def api_owm():
@@ -171,7 +174,11 @@ while True:
         n_timeSteps = len(weather['list'])
         epochs = [weather['list'][i]['dt'] for i in range(n_timeSteps)]
         datetime_dayOfMonth = [datetime.datetime.fromtimestamp(epochs[i]).day for i in range(n_timeSteps)]
-        idxs = np.where(np.array(datetime_dayOfMonth) == now.day)[0]
+        if now.hour<22:
+            dayDelay = 0
+        else:
+            dayDelay = 1
+        idxs = np.where(np.array(datetime_dayOfMonth) == now.day+dayDelay)[0]
         temp_dayMax = max([weather['list'][i]["main"]["temp_max"] for i in idxs])
         temp_next =        weather['list'][0]["main"]["temp_max"]
         pop_dayMax = max([weather['list'][i]["pop"] for i in idxs])
