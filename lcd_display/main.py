@@ -199,11 +199,11 @@ while True:
         iLine2, diffMin2 = extracted2[1]["iLine"], extracted2[1]["diffMin"]
         extracted_x71 = extract_from_departures(nextDep2[0])
         diffMin_x71 = extracted_x71["diffMin"]
-        final_str = iLine[0]+iLine[2]+":"+str(diffMin)+","+iLine2[0]+iLine2[2]+":"+str(diffMin)+",X71*:"+str(diffMin_x71)+""
+        final_str = iLine[0]+iLine[2]+":"+str(diffMin)+", "+iLine2[0]+iLine2[2]+":"+str(diffMin)+", X71*"+str(diffMin_x71)+""
         print(" lcd line 3: " + final_str + " (len:" + str(len(final_str)) + ")")
         if use_lcd:
             print("send to lcd...")
-            lcd.lcd_display_string(final_str, i + 1)
+            lcd.lcd_display_string(final_str, 3)
     else:
         final_str = "no response (vbb)"
         print(" lcd line 1,2,3:", final_str)
@@ -236,7 +236,7 @@ while True:
             round(pop_dayMax * 100)) + "" + ", w:"+str(round(wind_dayMax))+\
             ("*" if dayDelay == 1 else "")
         final_str2 = "T: " + str(round(temp_next)) + ", Tx:" + str(round(temp_dayMax)) + ", pr:" + str(
-            round(pop_dayMax * 100)) + "%" + ", w:" + str(round(wind_dayMax)) + \
+            round(pop_dayMax * 10)) + "%" + ", w:" + str(round(wind_dayMax)) + \
                     ("*" if dayDelay == 1 else "")
         print(" lcd line 4: " + final_str + " (len:" + str(len(final_str)) + ")")
         if use_lcd:
