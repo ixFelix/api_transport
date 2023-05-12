@@ -4,7 +4,7 @@ import datetime
 import numpy as np
 import xmltodict
 
-use_lcd = True  # for debugging. False on pc, true on raspberry
+use_lcd = False  # for debugging. False on pc, true on raspberry
 
 if use_lcd:
     import lcddriver
@@ -18,8 +18,8 @@ INTERVALL = 30
 INTERVAL_owm = 60*10  # 10 min temporal resolution of model
 WORKTIME_HOURS = [[7, 23]]
 
-baseurl = "https://v6.vbb.transport.rest/"
-# baseurl = "https://v5.vbb.transport.rest/"
+#baseurl = "https://v6.vbb.transport.rest/"
+baseurl = "https://v5.vbb.transport.rest/"
 urlending = "&accept=application/x-ndjson"
 
 
@@ -136,7 +136,7 @@ ext = 900070401  # "Tauernallee Santisstrasse"
 ext_dir = 900070301  # U Alt-Mariendorf
 
 i = 0
-weather = "not requested"
+#weather = "not requested"
 
 while True:
     # for i in range(100):
@@ -157,8 +157,8 @@ while True:
         time.sleep(INTERVALL)
         continue
 
-    # nextDep = nextDeparturesAtStop(ext=900070401, maxNo=4)
-    nextDep = ""
+    nextDep = nextDeparturesAtStop(ext=900070401, maxNo=4)
+    # nextDep = ""
     weather = api_owm(check_interval=True)
 
     # -------- handle lines 1,2,3 (departures) --------
@@ -179,7 +179,7 @@ while True:
                 diffMin = iWait.seconds // 60
 
             final_str = iLine.ljust(3) + " " + iDest.ljust(11) + " " + str(diffMin).rjust(2) + "'"
-            print(" lcd line " + str(i) + ": " + final_str)
+            print(" lcd line " + str(i) + ": " + final_str+" (len:"+str(len(final_str))+")")
 
             # send string to lcd display
             if use_lcd:
@@ -189,13 +189,14 @@ while True:
         final_str = "no response (vbb)"
         print(" lcd line 1,2,3:", final_str)
         if use_lcd:
+            print("send to lcd...")
             [lcd.lcd_display_string(final_str, i + 1) for i in range(3)]
 
     # handle third line (weather)
     print("handle line 4 (weather)")
     if len(weather) == 0:
         final_str = "no response (owm)"
-        print(" lcd line 4: " + final_str)
+        print(" lcd line 4: " + final_str+" (len:"+str(len(final_str))+")")
     elif weather == "stalling":
         print("stalling in writing process.")
     else:
@@ -213,7 +214,7 @@ while True:
         pop_dayMax = max([weather['list'][i]["pop"] for i in idxs])
         final_str = "T:" + str(round(temp_next)) + ", Tm:" + str(round(temp_dayMax)) + ", pr:" + str(
             round(pop_dayMax * 100)) + "%" + ("'" if dayDelay == 1 else "")
-        print(" lcd line 4: " + final_str)
+        print(" lcd line 4: " + final_str+" (len:"+str(len(final_str))+")")
         if use_lcd:
             lcd.lcd_display_string(final_str, 4)
 
