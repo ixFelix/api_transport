@@ -193,7 +193,7 @@ while True:
             if use_lcd:
                 print("send to lcd...")
                 lcd.lcd_display_string(final_str, i + 1)
-        print("handle 2 more departures to Mariendorf and one to Gropius")
+        print("handle line 3 (2 more departures to Mariendorf and one to Gropius) and display short")
         extracted2 = [extract_from_departures(nextDep[i]) for i in (3, 4)]
         iLine, diffMin = extracted2[0]["iLine"], extracted2[0]["diffMin"]
         iLine2, diffMin2 = extracted2[1]["iLine"], extracted2[1]["diffMin"]
@@ -201,7 +201,9 @@ while True:
         diffMin_x71 = extracted_x71["diffMin"]
         final_str = iLine[0]+iLine[2]+":"+str(diffMin)+","+iLine2[0]+iLine2[2]+":"+str(diffMin)+",X71*:"+str(diffMin_x71)+""
         print(" lcd line 3: " + final_str + " (len:" + str(len(final_str)) + ")")
-
+        if use_lcd:
+            print("send to lcd...")
+            lcd.lcd_display_string(final_str, i + 1)
     else:
         final_str = "no response (vbb)"
         print(" lcd line 1,2,3:", final_str)
@@ -230,8 +232,8 @@ while True:
         temp_next = weather['list'][0]["main"]["temp_max"]
         pop_dayMax = max([weather['list'][i]["pop"] for i in idxs])
         wind_dayMax = max([weather['list'][i]["wind"]["gust"] for i in idxs])
-        final_str = "T" + str(round(temp_next)) + ",Tx" + str(round(temp_dayMax)) + ",pr" + str(
-            round(pop_dayMax * 100)) + "" + ",w"+str(round(wind_dayMax))+\
+        final_str = "T:" + str(round(temp_next)) + "-" + str(round(temp_dayMax)) + ", pr:" + str(
+            round(pop_dayMax * 100)) + "" + ", w:"+str(round(wind_dayMax))+\
             ("*" if dayDelay == 1 else "")
         final_str2 = "T: " + str(round(temp_next)) + ", Tx:" + str(round(temp_dayMax)) + ", pr:" + str(
             round(pop_dayMax * 100)) + "%" + ", w:" + str(round(wind_dayMax)) + \
