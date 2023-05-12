@@ -15,10 +15,10 @@ if use_lcd:
 
 t1 = time.time()
 INTERVALL = 30
-INTERVAL_owm = 60*10  # 10 min temporal resolution of model
+INTERVAL_owm = 60 * 10  # 10 min temporal resolution of model
 WORKTIME_HOURS = [[7, 23]]
 
-#baseurl = "https://v6.vbb.transport.rest/"
+# baseurl = "https://v6.vbb.transport.rest/"
 baseurl = "https://v5.vbb.transport.rest/"
 urlending = "&accept=application/x-ndjson"
 
@@ -89,10 +89,10 @@ def api_owm(check_interval=True):
         now = datetime.datetime.now()
         time_since_last_request = (now - last_request).seconds  # in minutes
         if time_since_last_request < INTERVAL_owm:
-            print("wait until", INTERVAL_owm/60, "min have passed. (Currently", time_since_last_request/60, ")")
+            print("wait until", INTERVAL_owm / 60, "min have passed. (Currently", time_since_last_request / 60, ")")
             return "stalling"
         else:
-            print(INTERVAL_owm/60, "minutes have passed. Continue weather request.")
+            print(INTERVAL_owm / 60, "minutes have passed. Continue weather request.")
     else:
         print("Either check_interval is not requested or this is the first request. Continue weather request.")
 
@@ -119,7 +119,7 @@ def nameToExtStation(name):
     return id  # ['@extId']
 
 
-def nextDeparturesAtStop(name=False, ext=0, maxNo=3):
+def nextDeparturesAtStop(name=False, ext=0, ext_dir="", maxNo=3, duration=10):
     if not ext:
         if name:
             ext = nameToExtStation(name)
@@ -127,16 +127,17 @@ def nextDeparturesAtStop(name=False, ext=0, maxNo=3):
             print("ERROR. You must provide name or ext.")
 
     command, param = 'stops/' + str(ext) + '/' + 'departures?', \
-                     {'direction': ext_dir, 'results': maxNo, 'duration': 20}
+                     {'direction': ext_dir, 'results': maxNo, 'duration': duration}
     response = api_vbb(command, param)
     return response
 
 
 ext = 900070401  # "Tauernallee Santisstrasse"
 ext_dir = 900070301  # U Alt-Mariendorf
+ext_dir2 = 900000082202  # Johannisthaler Chaussee
 
 i = 0
-#weather = "not requested"
+# weather = "not requested"
 
 while True:
     # for i in range(100):
@@ -157,7 +158,8 @@ while True:
         time.sleep(INTERVALL)
         continue
 
-    nextDep = nextDeparturesAtStop(ext=900070401, maxNo=4)
+    nextDep = nextDeparturesAtStop(ext=900070401, ext_dir=ext_dir, maxNo=6, duration=20)  # all bus to Mariendorf
+    nextDep2 = nextDeparturesAtStop(ext=900070401, ext_dir=ext_dir2, maxNo=2, duration=40)  # X71 to Gropius
     # nextDep = ""
     weather = api_owm(check_interval=True)
 
@@ -167,24 +169,39 @@ while True:
         # print("  - end of loop. Loop runtime =", time.time() - t_loop)
 
         print("now: ", now)
-        for i in range(min(3, len(nextDep))):
-            iLine = nextDep[i]['line']['name']
-            iDest = nextDep[i]['direction'][0:12]
-            iTime = nextDep[i]['when']
+        print("handle next 2 departures and display long")
+
+        def extract_from_departures(nextDep_i):
+            iLine = nextDep_i['line']['name']
+            iDest = nextDep_i['direction'][0:12]
+            iTime = nextDep_i['when']
             iWait = datetime.datetime.strptime(iTime[0:19],
                                                '%Y-%m-%dT%H:%M:%S') - now
             if iWait.seconds > 24 * 60 * 60 / 2:
                 diffMin = (24 * 60 * 60 - iWait.seconds) // 60
             else:
                 diffMin = iWait.seconds // 60
+            return {"iLine": iLine, "iDest": iDest, "diffMin": diffMin}
 
+        for i in range(min(2, len(nextDep))):
+            extracted = extract_from_departures(nextDep[i])
+            iLine, iDest, diffMin = extracted["iLine"], extracted["iDest"], extracted["diffMin"]
             final_str = iLine.ljust(3) + " " + iDest.ljust(11) + " " + str(diffMin).rjust(2) + "'"
-            print(" lcd line " + str(i) + ": " + final_str+" (len:"+str(len(final_str))+")")
+            print(" lcd line " + str(i) + ": " + final_str + " (len:" + str(len(final_str)) + ")")
 
             # send string to lcd display
             if use_lcd:
                 print("send to lcd...")
                 lcd.lcd_display_string(final_str, i + 1)
+        print("handle 2 more departures to Mariendorf and one to Gropius")
+        extracted2 = [extract_from_departures(nextDep[i]) for i in (3, 4)]
+        iLine, diffMin = extracted2[0]["iLine"], extracted2[0]["diffMin"]
+        iLine2, diffMin2 = extracted2[1]["iLine"], extracted2[1]["diffMin"]
+        extracted_x71 = extract_from_departures(nextDep2[0])
+        diffMin_x71 = extracted_x71["diffMin"]
+        final_str = iLine[0]+iLine[2]+":"+str(diffMin)+","+iLine2[0]+iLine2[2]+":"+str(diffMin)+",X71*:"+str(diffMin_x71)+""
+        print(" lcd line 3: " + final_str + " (len:" + str(len(final_str)) + ")")
+
     else:
         final_str = "no response (vbb)"
         print(" lcd line 1,2,3:", final_str)
@@ -196,7 +213,7 @@ while True:
     print("handle line 4 (weather)")
     if len(weather) == 0:
         final_str = "no response (owm)"
-        print(" lcd line 4: " + final_str+" (len:"+str(len(final_str))+")")
+        print(" lcd line 4: " + final_str + " (len:" + str(len(final_str)) + ")")
     elif weather == "stalling":
         print("stalling in writing process.")
     else:
@@ -204,7 +221,7 @@ while True:
         n_timeSteps = len(weather['list'])
         epochs = [weather['list'][i]['dt'] for i in range(n_timeSteps)]
         datetime_dayOfMonth = [datetime.datetime.fromtimestamp(epochs[i]).day for i in range(n_timeSteps)]
-        if now.hour < 22:
+        if now.hour < 20:
             dayDelay = 0
         else:
             dayDelay = 1
@@ -212,9 +229,14 @@ while True:
         temp_dayMax = max([weather['list'][i]["main"]["temp_max"] for i in idxs])
         temp_next = weather['list'][0]["main"]["temp_max"]
         pop_dayMax = max([weather['list'][i]["pop"] for i in idxs])
-        final_str = "T:" + str(round(temp_next)) + ", Tm:" + str(round(temp_dayMax)) + ", pr:" + str(
-            round(pop_dayMax * 100)) + "%" + ("'" if dayDelay == 1 else "")
-        print(" lcd line 4: " + final_str+" (len:"+str(len(final_str))+")")
+        wind_dayMax = max([weather['list'][i]["wind"]["gust"] for i in idxs])
+        final_str = "T" + str(round(temp_next)) + ",Tx" + str(round(temp_dayMax)) + ",pr" + str(
+            round(pop_dayMax * 100)) + "" + ",w"+str(round(wind_dayMax))+\
+            ("*" if dayDelay == 1 else "")
+        final_str2 = "T: " + str(round(temp_next)) + ", Tx:" + str(round(temp_dayMax)) + ", pr:" + str(
+            round(pop_dayMax * 100)) + "%" + ", w:" + str(round(wind_dayMax)) + \
+                    ("*" if dayDelay == 1 else "")
+        print(" lcd line 4: " + final_str + " (len:" + str(len(final_str)) + ")")
         if use_lcd:
             lcd.lcd_display_string(final_str, 4)
 
