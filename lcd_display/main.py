@@ -4,7 +4,7 @@ import datetime
 import numpy as np
 import xmltodict
 
-use_lcd = False  # for debugging. False on pc, true on raspberry
+use_lcd = True # for debugging. False on pc, true on raspberry
 
 if use_lcd:
     import lcddriver
@@ -199,7 +199,7 @@ while True:
         iLine2, diffMin2 = extracted2[1]["iLine"], extracted2[1]["diffMin"]
         extracted_x71 = extract_from_departures(nextDep2[0])
         diffMin_x71 = extracted_x71["diffMin"]
-        final_str = iLine[0]+iLine[2]+":"+str(diffMin)+", "+iLine2[0]+iLine2[2]+":"+str(diffMin)+", X71*"+str(diffMin_x71)+""
+        final_str = iLine[0]+":"+str(diffMin)+", "+iLine2[0]+":"+str(diffMin2)+", X71*:"+str(diffMin_x71)+""
         print(" lcd line 3: " + final_str + " (len:" + str(len(final_str)) + ")")
         if use_lcd:
             print("send to lcd...")
