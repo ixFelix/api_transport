@@ -4,22 +4,25 @@ import datetime
 import numpy as np
 import xmltodict
 
-use_lcd = False # for debugging. False on pc, true on raspberry
+debugging = True
+# if true, lcd will not be addressed
 
-if use_lcd:
+if not debugging:
     import lcddriver
-
     lcd = lcddriver.lcd()
 
-# debug. To undebug, remove all ## before lcd
+if debugging:
+    path_to_owm_token = "owm_token.txt"
+else:
+    path_to_owm_token = "/home/pi/work/projects/api_transport/lcd_display/owm_token.txt"
+
 
 t1 = time.time()
 INTERVALL = 30
 INTERVAL_owm = 60 * 10  # 10 min temporal resolution of model
 WORKTIME_HOURS = [[7, 23]]
 
-baseurl = "https://v6.vbb.transport.rest/"
-#baseurl = "https://v5.vbb.transport.rest/"
+baseurl_vbb = "https://v6.vbb.transport.rest/"
 urlending = "&accept=application/x-ndjson"
 
 
@@ -63,7 +66,7 @@ def api_vbb(command, param={}):
     def vbb_createAdress(command, param):
         commands = process_command_vbb(command, param)
         # accessId ="felix-fauer-8b71-1705950c2589"
-        address = baseurl + commands['beforeId'] + "/" + commands['behindId'] + "&accept=application/x-ndjson"
+        address = baseurl_vbb + commands['beforeId'] + "/" + commands['behindId'] + "&accept=application/x-ndjson"
         # print(address)
         return address
 
@@ -99,8 +102,7 @@ def api_owm(check_interval=True):
         # check interval and return old, if necessary
 
     # else continue:
-    owm_token = str(np.loadtxt("owm_token.txt", dtype=str))
-    print(owm_token)
+    owm_token = str(np.loadtxt(path_to_owm_token, dtype=str))
     url = "http://api.openweathermap.org/data/2.5/forecast?lat=52.4385&lon=13.3927&units=metric&appid"+ \
           "="+str(owm_token)
     response = openWebsite(url)
@@ -108,9 +110,9 @@ def api_owm(check_interval=True):
 
     if len(response) > 0:
         response_dict = responseToDict(response)
-        if 'cod' in response_dict.keys():
-            print("Warning: response is empty.")
-            return ""
+        #if 'cod' in response_dict.keys():
+        #    print("Warning: response is empty.")
+        #    return ""
     else:
         print("Warning: response is empty.")
         return ""
@@ -157,22 +159,26 @@ while True:
             go = True
     if not go:
         print("no working hours. sleep for ", INTERVALL, "s.")
-        if use_lcd:
+        if not debugging:
             lcd.lcd_clear()
             lcd.lcd_display_string("Good Night :)", 1)
         time.sleep(INTERVALL)
         continue
 
     nextDep = nextDeparturesAtStop(ext=900070401, ext_dir=ext_dir, maxNo=6, duration=20)  # all bus to Mariendorf
+    print("received answer from vbb api request 1")
     nextDep2 = nextDeparturesAtStop(ext=900070401, ext_dir=ext_dir2, maxNo=2, duration=40)  # X71 to Gropius
-    nextDep, nextDep2 = "", ""
+    print("received answer from vbb api request 2")
+    #nextDep, nextDep2 = "", ""
     weather = api_owm(check_interval=True)
 
     # -------- handle lines 1,2,3 (departures) --------
     print("Handle lines 1,2,3 (departures")
-    if len(nextDep) > 0:
+    #if len(nextDep) > 0:
+    if type (nextDep)==dict and type(nextDep2)==dict:#'departures' in nextDep.keys() and 'departures' in nextDep2.keys():
         # print("  - end of loop. Loop runtime =", time.time() - t_loop)
-
+        departures = nextDep['departures']
+        departures2 = nextDep2['departures']
         print("now: ", now)
         print("handle next 2 departures and display long")
 
@@ -188,31 +194,31 @@ while True:
                 diffMin = iWait.seconds // 60
             return {"iLine": iLine, "iDest": iDest, "diffMin": diffMin}
 
-        for i in range(min(2, len(nextDep))):
-            extracted = extract_from_departures(nextDep[i])
+        for i in range(min(2, len(departures))):
+            extracted = extract_from_departures(departures[i])
             iLine, iDest, diffMin = extracted["iLine"], extracted["iDest"], extracted["diffMin"]
             final_str = iLine.ljust(3) + " " + iDest.ljust(11) + " " + str(diffMin).rjust(2) + "'"
             print(" lcd line " + str(i) + ": " + final_str + " (len:" + str(len(final_str)) + ")")
 
             # send string to lcd display
-            if use_lcd:
+            if not debugging:
                 print("send to lcd...")
                 lcd.lcd_display_string(final_str, i + 1)
         print("handle line 3 (2 more departures to Mariendorf and one to Gropius) and display short")
-        extracted2 = [extract_from_departures(nextDep[i]) for i in (3, 4)]
+        extracted2 = [extract_from_departures(departures[i]) for i in (2, 3)]
         iLine, diffMin = extracted2[0]["iLine"], extracted2[0]["diffMin"]
         iLine2, diffMin2 = extracted2[1]["iLine"], extracted2[1]["diffMin"]
-        extracted_x71 = extract_from_departures(nextDep2[0])
+        extracted_x71 = extract_from_departures(departures2[0])
         diffMin_x71 = extracted_x71["diffMin"]
         final_str = iLine[0]+":"+str(diffMin)+", "+iLine2[0]+":"+str(diffMin2)+", X71*:"+str(diffMin_x71)+""
         print(" lcd line 3: " + final_str + " (len:" + str(len(final_str)) + ")")
-        if use_lcd:
+        if not debugging:
             print("send to lcd...")
             lcd.lcd_display_string(final_str, 3)
     else:
         final_str = "no response (vbb)"
         print(" lcd line 1,2,3:", final_str)
-        if use_lcd:
+        if not debugging:
             print("send to lcd...")
             [lcd.lcd_display_string(final_str, i + 1) for i in range(3)]
 
@@ -244,7 +250,7 @@ while True:
             round(pop_dayMax * 10)) + "%" + ", w:" + str(round(wind_dayMax)) + \
                     ("*" if dayDelay == 1 else "")
         print(" lcd line 4: " + final_str + " (len:" + str(len(final_str)) + ")")
-        if use_lcd:
+        if not debugging:
             lcd.lcd_display_string(final_str, 4)
 
     print("sleep for", INTERVALL, "s.")
