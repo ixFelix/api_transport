@@ -18,8 +18,8 @@ INTERVALL = 30
 INTERVAL_owm = 60 * 10  # 10 min temporal resolution of model
 WORKTIME_HOURS = [[7, 23]]
 
-# baseurl = "https://v6.vbb.transport.rest/"
-baseurl = "https://v5.vbb.transport.rest/"
+baseurl = "https://v6.vbb.transport.rest/"
+#baseurl = "https://v5.vbb.transport.rest/"
 urlending = "&accept=application/x-ndjson"
 
 
@@ -139,7 +139,7 @@ def nextDeparturesAtStop(name=False, ext=0, ext_dir="", maxNo=3, duration=10):
 
 ext = 900070401  # "Tauernallee Santisstrasse"
 ext_dir = 900070301  # U Alt-Mariendorf
-ext_dir2 = 900000082202  # Johannisthaler Chaussee
+ext_dir2 = 900082202  # Johannisthaler Chaussee
 
 i = 0
 # weather = "not requested"
