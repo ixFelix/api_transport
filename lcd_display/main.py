@@ -101,17 +101,20 @@ def api_owm(check_interval=True):
     # else continue:
     owm_token = str(np.loadtxt("owm_token.txt", dtype=str))
     print(owm_token)
-    url = "http://api.openweathermap.org/data/2.5/forecast?lat=52.4385&lon=13.3927&units=metric&appid" \
+    url = "http://api.openweathermap.org/data/2.5/forecast?lat=52.4385&lon=13.3927&units=metric&appid"+ \
           "="+str(owm_token)
     response = openWebsite(url)
     last_request = datetime.datetime.now()
 
     if len(response) > 0:
-        return responseToDict(response)
+        response_dict = responseToDict(response)
+        if 'cod' in response_dict.keys():
+            print("Warning: response is empty.")
+            return ""
     else:
         print("Warning: response is empty.")
         return ""
-
+    return(response_dict)
 
 def nameToExtStation(name):
     response = api_vbb('locations?', {"query": name, "maxNo": 1, "poi": "false", "addresses": "false"})
@@ -160,8 +163,8 @@ while True:
         time.sleep(INTERVALL)
         continue
 
-    #nextDep = nextDeparturesAtStop(ext=900070401, ext_dir=ext_dir, maxNo=6, duration=20)  # all bus to Mariendorf
-    #nextDep2 = nextDeparturesAtStop(ext=900070401, ext_dir=ext_dir2, maxNo=2, duration=40)  # X71 to Gropius
+    nextDep = nextDeparturesAtStop(ext=900070401, ext_dir=ext_dir, maxNo=6, duration=20)  # all bus to Mariendorf
+    nextDep2 = nextDeparturesAtStop(ext=900070401, ext_dir=ext_dir2, maxNo=2, duration=40)  # X71 to Gropius
     nextDep, nextDep2 = "", ""
     weather = api_owm(check_interval=True)
 
