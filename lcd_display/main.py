@@ -4,7 +4,7 @@ import datetime
 import numpy as np
 import xmltodict
 
-use_lcd = True # for debugging. False on pc, true on raspberry
+use_lcd = False # for debugging. False on pc, true on raspberry
 
 if use_lcd:
     import lcddriver
@@ -99,8 +99,10 @@ def api_owm(check_interval=True):
         # check interval and return old, if necessary
 
     # else continue:
+    owm_token = str(np.loadtxt("owm_token.txt", dtype=str))
+    print(owm_token)
     url = "http://api.openweathermap.org/data/2.5/forecast?lat=52.4385&lon=13.3927&units=metric&appid" \
-          "=09638815cd6e1c6a51e023f776f021ce"
+          "="+str(owm_token)
     response = openWebsite(url)
     last_request = datetime.datetime.now()
 
@@ -158,9 +160,9 @@ while True:
         time.sleep(INTERVALL)
         continue
 
-    nextDep = nextDeparturesAtStop(ext=900070401, ext_dir=ext_dir, maxNo=6, duration=20)  # all bus to Mariendorf
-    nextDep2 = nextDeparturesAtStop(ext=900070401, ext_dir=ext_dir2, maxNo=2, duration=40)  # X71 to Gropius
-    # nextDep = ""
+    #nextDep = nextDeparturesAtStop(ext=900070401, ext_dir=ext_dir, maxNo=6, duration=20)  # all bus to Mariendorf
+    #nextDep2 = nextDeparturesAtStop(ext=900070401, ext_dir=ext_dir2, maxNo=2, duration=40)  # X71 to Gropius
+    nextDep, nextDep2 = "", ""
     weather = api_owm(check_interval=True)
 
     # -------- handle lines 1,2,3 (departures) --------
