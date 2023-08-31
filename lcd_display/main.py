@@ -21,7 +21,7 @@ t1 = time.time()
 print(" ========= begin of file", datetime.datetime.now(), "==========")
 INTERVALL = 30
 INTERVAL_owm = 60 * 10  # 10 min temporal resolution of model
-WORKTIME_HOURS = [[7, 23]]
+WORKTIME_HOURS = [[0,24]] #[[7, 23]]
 
 baseurl_vbb = "https://v6.vbb.transport.rest/"
 urlending = "&accept=application/x-ndjson"
@@ -213,10 +213,13 @@ while True:
             extracted2 = [extract_from_departures(departures[i]) for i in (2, 3)]
             iLine, diffMin = extracted2[0]["iLine"], extracted2[0]["diffMin"]
             iLine2, diffMin2 = extracted2[1]["iLine"], extracted2[1]["diffMin"]
-            extracted_x71 = extract_from_departures(departures2[0])
-            diffMin_x71 = extracted_x71["diffMin"]
+            if len(departures2)==0:
+                diffMin_x71="?"
+            else:
+                extracted_x71 = extract_from_departures(departures2[0])
+                diffMin_x71 = extracted_x71["diffMin"]
             final_str = iLine[0] + ":" + str(diffMin) + ", " + iLine2[0] + ":" + str(diffMin2) + ", X71*:" + str(
-                diffMin_x71) + ""
+                diffMin_x71) + "  "
             print(" lcd line 3: " + final_str + " (len:" + str(len(final_str)) + ")")
             print("send to lcd...")
             if not debugging:
@@ -247,7 +250,7 @@ while True:
         if now.hour < 20:
             dayDelay = 0
         else:
-            dayDelay = 1
+            dayDelay = 1 - int(now.day)//30 # very dirty debug for dayOfMonth 30 and 31. Then, dont show next day.
         idxs = np.where(np.array(datetime_dayOfMonth) == now.day + dayDelay)[0]
         temp_dayMax = max([weather['list'][i]["main"]["temp_max"] for i in idxs])
         temp_next = weather['list'][0]["main"]["temp_max"]
