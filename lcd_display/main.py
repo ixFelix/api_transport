@@ -4,7 +4,7 @@ import datetime
 import numpy as np
 import xmltodict
 
-debugging = False
+debugging = True
 # if true, lcd will not be addressed
 
 if not debugging:
@@ -18,6 +18,7 @@ else:
     path_to_owm_token = "/home/pi/work/projects/api_transport/lcd_display/owm_token.txt"
 
 t1 = time.time()
+print(" ========= begin of file", datetime.datetime.now(), "==========")
 INTERVALL = 30
 INTERVAL_owm = 60 * 10  # 10 min temporal resolution of model
 WORKTIME_HOURS = [[7, 23]]
@@ -108,7 +109,7 @@ def api_owm(check_interval=True):
     response = openWebsite(url)
     last_request = datetime.datetime.now()
 
-    if len(response) > 0:
+    if response is not None and len(response) > 0:
         response_dict = responseToDict(response)
         # if 'cod' in response_dict.keys():
         #    print("Warning: response is empty.")
@@ -148,8 +149,7 @@ i = 0
 # weather = "not requested"
 
 while True:
-    # for i in range(100):
-    # print("  - begin of loop ("+str(i)+"). Time: ", time.time() - t1)
+    print("  - begin of loop ("+str(i)+"). Time: ", datetime.datetime.now())
     t_loop = time.time()
     now = datetime.datetime.now()
 
@@ -209,7 +209,7 @@ while True:
                 print("send to lcd...")
                 lcd.lcd_display_string(final_str, i + 1)
         print("handle line 3 (2 more departures to Mariendorf and one to Gropius) and display short")
-        if len(extracted2) > 3:
+        if len(departures) > 3:
             extracted2 = [extract_from_departures(departures[i]) for i in (2, 3)]
             iLine, diffMin = extracted2[0]["iLine"], extracted2[0]["diffMin"]
             iLine2, diffMin2 = extracted2[1]["iLine"], extracted2[1]["diffMin"]
@@ -218,12 +218,13 @@ while True:
             final_str = iLine[0] + ":" + str(diffMin) + ", " + iLine2[0] + ":" + str(diffMin2) + ", X71*:" + str(
                 diffMin_x71) + ""
             print(" lcd line 3: " + final_str + " (len:" + str(len(final_str)) + ")")
+            print("send to lcd...")
             if not debugging:
-                print("send to lcd...")
-            lcd.lcd_display_string(final_str, 3)
+                lcd.lcd_display_string(final_str, 3)
         else:
             print("send to lcd: no response (vbb 2)")
-            lcd.lcd_display_string("no response (vbb 2)", 3)
+            if not debugging:
+                lcd.lcd_display_string("no response (vbb 2)", 3)
     else:
         final_str = "no response (vbb)"
         print(" lcd line 1,2,3:", final_str)
