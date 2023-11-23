@@ -21,7 +21,7 @@ t1 = time.time()
 print(" ========= begin of file", datetime.datetime.now(), "==========")
 INTERVALL = 30
 INTERVAL_owm = 60 * 10  # 10 min temporal resolution of model
-WORKTIME_HOURS = [[0,24]] #[[7, 23]]
+WORKTIME_HOURS = [[8, 24]]
 
 baseurl_vbb = "https://v6.vbb.transport.rest/"
 urlending = "&accept=application/x-ndjson"
