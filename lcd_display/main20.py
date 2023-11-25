@@ -78,7 +78,7 @@ def print_lcd(message="", lineNo=0, print_debug=""):
         print(print_debug)
     print(" lcd line " + str(lineNo) + ": " + message + " (len:" + str(len(message)) + ")")
     if not debugging:
-        lcd.lcd_display_string(message, lineNo)
+        lcd.lcd_display_string(message, lineNo+1)
 
 
 def update_lines():
@@ -109,7 +109,9 @@ def update_line(lineNo=0):
                              "diffMin": [None for i in range(noDeps)]}
 
             if len(nextDep) < noDeps:
-                print("next Deps. number of Deps too short")
+                print("next Departures. number of Deps too short")
+                # todo: handle that progroam does not continue with None!
+                return False
             now = datetime.datetime.now()
             for i in range(noDeps):
                 iLine = nextDep[i]['line']['name']
@@ -134,10 +136,11 @@ def update_line(lineNo=0):
             info_show_dir2 = extract_departures(nextDep, 1)
 
         # print line
-        if lineNo in [0, 1]:
+        final_str = "(no data)           "
+        if lineNo in [0, 1] and info_show_dir1:
             final_str = info_show_dir1["iLine"][lineNo].ljust(3) + " " + info_show_dir1["iDest"][lineNo].ljust(11) + \
                         " " + str(info_show_dir1["diffMin"][lineNo]).rjust(2) + "'"
-        if lineNo == 2:
+        if lineNo == 2 and info_show_dir1 and info_show_dir2:
             final_str = info_show_dir1["iLine"][2][0:1] + ":" + str(info_show_dir1["diffMin"][2]) + ", " + \
                         info_show_dir1["iLine"][3][0:1] + ":" + str(info_show_dir1["diffMin"][3]) + \
                         ", X71*:" + str(info_show_dir2["diffMin"][0]) + "  "
@@ -153,7 +156,7 @@ def update_line(lineNo=0):
         iLast_raw = newest_next_departures[station1][direction1]["realtimeDataUpdatedAt"]
         iDelta = datetime.datetime.now() - datetime.datetime.fromtimestamp(iLast_raw)
         final_str = " (delay: " + str(iDelta.seconds) + "s) "
-        print_lcd(message=final_str, lineNo=3)
+        print_lcd(final_str, lineNo)
 
 
 def request_timer(wait=INTERVALL_request):
