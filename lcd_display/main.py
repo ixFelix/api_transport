@@ -4,7 +4,7 @@ import datetime
 import numpy as np
 import xmltodict
 
-debugging = False
+debugging = True
 # if true, lcd will not be addressed
 
 if not debugging:
@@ -26,6 +26,8 @@ WORKTIME_HOURS = [[8, 24]]
 baseurl_vbb = "https://v6.vbb.transport.rest/"
 urlending = "&accept=application/x-ndjson"
 
+headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
+#response = requests.get(url, headers=headers)
 
 def responseToDict(response, return_json=True):
     if return_json:
@@ -38,7 +40,7 @@ def openWebsite(address):
     # print("    - start api request")
     print(address)
     try:
-        r = requests.get(address)
+        r = requests.get(address, headers=headers)
     except requests.exceptions.MissingSchema as e:
         print(" - Error in Request (Missing  Schema):", e)
         # print("    - received answer", time.time() - t1)
