@@ -23,7 +23,7 @@ print(" ========= begin of file", datetime.datetime.now(), "==========")
 INTERVALL_print = 10
 INTERVALL_request = 60
 INTERVAL_owm = 60 * 10  # 10 min temporal resolution of model
-WORKTIME_HOURS = [[8, 24]]
+WORKTIME_HOURS = [[8, 10]]
 
 baseurl_vbb = "https://v6.vbb.transport.rest/"
 urlending = "&accept=application/x-ndjson"
@@ -70,7 +70,7 @@ def online_next_departures(station=station1, direction=direction1):
             newest_next_departures[station] = {}
 
         newest_next_departures[station][direction] = responseToDict(response_xml)
-    update_lines()
+    #update_lines()
 
 
 def print_lcd(message="", lineNo=0, print_debug=""):
