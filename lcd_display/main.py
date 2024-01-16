@@ -4,7 +4,7 @@ import datetime
 import numpy as np
 import xmltodict
 
-debugging = True
+debugging = False
 # if true, lcd will not be addressed
 
 if not debugging:

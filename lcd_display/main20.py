@@ -23,7 +23,7 @@ print(" ========= begin of file", datetime.datetime.now(), "==========")
 INTERVALL_print = 10
 INTERVALL_request = 60
 INTERVAL_owm = 60 * 10  # 10 min temporal resolution of model
-WORKTIME_HOURS = [[8, 11]]
+WORKTIME_HOURS = [[8, 24]]
 
 baseurl_vbb = "https://v6.vbb.transport.rest/"
 urlending = "&accept=application/x-ndjson"
@@ -77,6 +77,8 @@ def print_lcd(message="", lineNo=0, print_debug=""):
     if print_debug != "":
         print(print_debug)
     print(" lcd line " + str(lineNo) + ": " + message + " (len:" + str(len(message)) + ")")
+    if len(message) > 20:
+        message = message[0:20]
     if not debugging:
         lcd.lcd_display_string(message, lineNo+1)
 
@@ -139,7 +141,7 @@ def update_line(lineNo=0):
         final_str = "(no data)           "
         if lineNo in [0, 1] and info_show_dir1:
             final_str = info_show_dir1["iLine"][lineNo].ljust(3) + " " + info_show_dir1["iDest"][lineNo].ljust(11) + \
-                        " " + str(info_show_dir1["diffMin"][lineNo]).rjust(2) + "'"
+                        " " + str(info_show_dir1["diffMin"][lineNo]).rjust(2) + ""
         if lineNo == 2 and info_show_dir1 and info_show_dir2:
             final_str = info_show_dir1["iLine"][2][0:1] + ":" + str(info_show_dir1["diffMin"][2]) + ", " + \
                         info_show_dir1["iLine"][3][0:1] + ":" + str(info_show_dir1["diffMin"][3]) + \
