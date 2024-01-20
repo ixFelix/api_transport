@@ -36,6 +36,7 @@ direction2 = '900082202'  # Johannisthaler Chaussee
 
 newest_next_departures = {}
 
+current_prints = [None, None, None, None] # save current print and do not reprint if no change.
 
 def responseToDict(response, return_json=True):
     if return_json:
@@ -79,7 +80,14 @@ def online_next_departures(station=station1, direction=direction1):
 def print_lcd(message="", lineNo=0, print_debug=""):
     if print_debug != "":
         print(print_debug)
-    print(" lcd line " + str(lineNo) + ": " + message + " (len:" + str(len(message)) + ")")
+    print(" - lcd line " + str(lineNo) + ": " + message + " (len:" + str(len(message)) + ")")
+
+    if current_prints[lineNo] == message:
+        print("    (already printed. do not send again)")
+        return None
+    else:
+        current_prints[lineNo] = message
+
     if len(message) > 20:
         message = message[0:20]
     if not debugging:
@@ -160,7 +168,7 @@ def update_line(lineNo=0):
             return None
         iLast_raw = newest_next_departures[station1][direction1]["realtimeDataUpdatedAt"]
         iDelta = datetime.datetime.now() - datetime.datetime.fromtimestamp(iLast_raw)
-        final_str = " (delay: " + str(iDelta.seconds) + "s) "
+        final_str = "(delay: " + str(iDelta.seconds) + "s) "
         print_lcd(final_str, lineNo)
 
 
@@ -176,7 +184,7 @@ def request_timer(wait=INTERVALL_request):
         now = datetime.datetime.now()
         worktime_i=0
         if now.hour < WORKTIME_HOURS[worktime_i][0] or now.hour > WORKTIME_HOURS[worktime_i][1]:
-            print("outside of working ours. sleep for ", wait, "s.")
+            print(" - outside of working ours. sleep for ", wait, "s.")
             #print_lcd("                    ", 0)
             #print_lcd("   Good Night :)    ", 1)
             #print_lcd("                    ", 2)
@@ -184,7 +192,7 @@ def request_timer(wait=INTERVALL_request):
             time.sleep(wait)
             continue
 
-        print("  - begin of request loop (" + str(count_loops_1) + "). Time: ", datetime.datetime.now())
+        print(" ---- begin of request loop (" + str(count_loops_1) + "). Time: ", datetime.datetime.now(), " ----")
         if not x1.is_alive():
             print(" start thread 1")
             x1 = threading.Thread(target=online_next_departures, args=(station1, direction1))
@@ -199,7 +207,7 @@ def request_timer(wait=INTERVALL_request):
         else:
             print(" do not start thread 2 because it is still running")
         count_loops_1 += 1
-        print("  sleep request for ", INTERVALL_request, "s.")
+        print(" - sleep request for ", INTERVALL_request, "s.")
         time.sleep(wait)
 
 
@@ -210,7 +218,7 @@ def print_timer(wait=INTERVALL_print):
         worktime_i=0
         if now.hour < WORKTIME_HOURS[worktime_i][0] or now.hour > WORKTIME_HOURS[worktime_i][1]:
 
-            print("outside of working ours. sleep for ", wait, "s.")
+            print(" - outside of working ours. sleep for ", wait, "s.")
             print_lcd("                    ", 0)
             print_lcd("   Good Night :)    ", 1)
             print_lcd("                    ", 2)
@@ -218,9 +226,9 @@ def print_timer(wait=INTERVALL_print):
             time.sleep(wait)
             continue
 
-        print("  - begin of print loop (" + str(count_loops) + "). Time: ", datetime.datetime.now())
+        print(" ---- begin of print loop (" + str(count_loops) + "). Time: ", datetime.datetime.now(), "----")
         update_lines()
-        print(" sleep for ", INTERVALL_print, "s.")
+        print(" - sleep for ", INTERVALL_print, "s.")
         time.sleep(wait)
         count_loops += 1
 
