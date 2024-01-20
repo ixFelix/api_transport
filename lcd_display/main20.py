@@ -1,3 +1,6 @@
+# bug notice: The lcd display does not work when new lines are sent from different threads. Therefore, I only send data
+# from the print thread and never from the requests thread.
+
 import requests, json
 import time
 import datetime
@@ -23,7 +26,7 @@ print(" ========= begin of file", datetime.datetime.now(), "==========")
 INTERVALL_print = 10
 INTERVALL_request = 60
 INTERVAL_owm = 60 * 10  # 10 min temporal resolution of model
-WORKTIME_HOURS = [[8, 10]]
+WORKTIME_HOURS = [[8, 24]]
 
 baseurl_vbb = "https://v6.vbb.transport.rest/"
 urlending = "&accept=application/x-ndjson"
@@ -174,10 +177,10 @@ def request_timer(wait=INTERVALL_request):
         worktime_i=0
         if now.hour < WORKTIME_HOURS[worktime_i][0] or now.hour > WORKTIME_HOURS[worktime_i][1]:
             print("outside of working ours. sleep for ", wait, "s.")
-            print_lcd("                    ", 0)
-            print_lcd("   Good Night :)    ", 1)
-            print_lcd("                    ", 2)
-            print_lcd("                    ", 3)
+            #print_lcd("                    ", 0)
+            #print_lcd("   Good Night :)    ", 1)
+            #print_lcd("                    ", 2)
+            #print_lcd("                    ", 3)
             time.sleep(wait)
             continue
 
@@ -206,6 +209,12 @@ def print_timer(wait=INTERVALL_print):
         now = datetime.datetime.now()
         worktime_i=0
         if now.hour < WORKTIME_HOURS[worktime_i][0] or now.hour > WORKTIME_HOURS[worktime_i][1]:
+
+            print("outside of working ours. sleep for ", wait, "s.")
+            print_lcd("                    ", 0)
+            print_lcd("   Good Night :)    ", 1)
+            print_lcd("                    ", 2)
+            print_lcd("                    ", 3)
             time.sleep(wait)
             continue
 
