@@ -30,9 +30,13 @@ WORKTIME_HOURS = [[0,24]]
 
 baseurl_vbb = "https://v6.vbb.transport.rest/"
 urlending = "&accept=application/x-ndjson"
-station1 = '900070401'  # Tauernallee Saentisstrasse
-direction1 = '900070301'  # Alt-Mariendorf
-direction2 = '900082202'  # Johannisthaler Chaussee
+#station1 = '900070401'  # Tauernallee Saentisstrasse
+#direction1 = '900070301'  # Alt-Mariendorf
+#direction2 = '900082202'  # Johannisthaler Chaussee
+station1   = '900066102' # Botanischer Garten
+direction1 = '900054104' # Schoeneberg
+station2   = '900066405' # Hindenburgdamm Klingsorstrasse
+direction2 = '900062202' # Rathaus Steglitz
 
 newest_next_departures = {}
 
@@ -102,18 +106,21 @@ def update_lines():
 def update_line(lineNo=0):
     def lcd_empty_line(message=""):
         print(message)
-
-    if lineNo in [0, 1, 2]:
+    print(lineNo)
+    stationHere = {0: station1, 1: station1, 2: station2, 3:station2}[lineNo]
+    directionHere = {0: direction1, 1: direction1, 2: direction2, 3: direction2}[lineNo]
+    if True:#lineNo in [0, 1, 2]:
         # check conditions
-        if station1 not in newest_next_departures.keys() or direction1 not in newest_next_departures[station1] \
-                or 'departures' not in newest_next_departures[station1][direction1].keys():
-            print_lcd("(no data)            ", print_debug="Lines 0+1: key direction1 in response not available")
+        if stationHere not in newest_next_departures.keys() or directionHere not in newest_next_departures[stationHere] \
+                or 'departures' not in newest_next_departures[stationHere][directionHere].keys():
+            print(newest_next_departures.keys())
+            #print_lcd("(no data)            ", print_debug="Lines 0+1: key direction in response not available")
             return None
-        if lineNo == 2:  # check whether other direction worked
-            if station1 not in newest_next_departures.keys() or direction2 not in newest_next_departures[station1] \
-                    or 'departures' not in newest_next_departures[station1][direction2].keys():
+        """if lineNo == 2:  # check whether other direction worked
+            if stationHere not in newest_next_departures.keys() or directionHere not in newest_next_departures[stationHere] \
+                    or 'departures' not in newest_next_departures[stationHere][directionHere].keys():
                 print_lcd("(no data)            ", print_debug="Line 2: key direction2 in response not available")
-                return None
+                return None"""
 
         # extract information
         def extract_departures(nextDep, noDeps):
@@ -140,42 +147,39 @@ def update_line(lineNo=0):
                     i] = iLine, iDest, diffMin
             return info_show_dir
 
-        if lineNo in [0, 1, 2]:
-            nextDep = newest_next_departures[station1][direction1]["departures"]
-            info_show_dir1 = extract_departures(nextDep, 4)
+        #if lineNo in [0, 1, 2]:
+        nextDep = newest_next_departures[stationHere][directionHere]["departures"]
+        info_show_dir1 = extract_departures(nextDep, min(2,len(nextDep)))
 
-        if lineNo == 2:
-            nextDep = newest_next_departures[station1][direction2]["departures"]
-            info_show_dir2 = extract_departures(nextDep, 1)
+        """if lineNo == 2:
+            nextDep = newest_next_departures[stationHere][directionHere]["departures"]
+            info_show_dir2 = extract_departures(nextDep, 1)"""
 
         # print line
         final_str = "(no data)           "
-        if lineNo in [0, 1] and info_show_dir1:
+        #if lineNo in [0, 1] and info_show_dir1:
+        if len(info_show_dir1["iLine"]) > lineNo:
             final_str = info_show_dir1["iLine"][lineNo].ljust(3) + " " + info_show_dir1["iDest"][lineNo].ljust(11) + \
-                        " " + str(info_show_dir1["diffMin"][lineNo]).rjust(2) + ""
-        if lineNo == 2 and info_show_dir1 and info_show_dir2:
-            final_str = info_show_dir1["iLine"][2][0:1] + ":" + str(info_show_dir1["diffMin"][2]) + ", " + \
-                        info_show_dir1["iLine"][3][0:1] + ":" + str(info_show_dir1["diffMin"][3]) + \
-                        ", X71*:" + str(info_show_dir2["diffMin"][0]) + "  "
-
+                " " + str(info_show_dir1["diffMin"][lineNo]).rjust(2) + ""
+        
         print_lcd(final_str, lineNo)
 
-    if lineNo == 3:
-        if station1 not in newest_next_departures.keys() or direction1 not in newest_next_departures[station1] \
-                or 'realtimeDataUpdatedAt' not in newest_next_departures[station1][direction1].keys():
+    """if lineNo == 3:
+        if stationHere not in newest_next_departures.keys() or direction1 not in newest_next_departures[stationHere] \
+                or 'realtimeDataUpdatedAt' not in newest_next_departures[stationHere][direction1].keys():
             print_lcd("(no delay data)     ", lineNo=3,
                       print_debug="line 3: no delay data yet or key missing")
             return None
-        iLast_raw = newest_next_departures[station1][direction1]["realtimeDataUpdatedAt"]
+        iLast_raw = newest_next_departures[stationHere][direction1]["realtimeDataUpdatedAt"]
         iDelta = datetime.datetime.now() - datetime.datetime.fromtimestamp(iLast_raw)
         final_str = "(delay: " + str(iDelta.seconds) + "s) "
-        print_lcd(final_str, lineNo)
+        print_lcd(final_str, lineNo)"""
 
 
 def request_timer(wait=INTERVALL_request):
     # repeatedly start requests. This function should be called in an "outer" thread and contains "inner" threads.
     x1 = threading.Thread(target=online_next_departures, args=(station1, direction1))
-    x2 = threading.Thread(target=online_next_departures, args=(station1, direction2))
+    x2 = threading.Thread(target=online_next_departures, args=(station2, direction2))
 
     count_loops_1 = 0
     while True:
@@ -202,7 +206,7 @@ def request_timer(wait=INTERVALL_request):
 
         if not x2.is_alive():
             print(" start thread 2")
-            x2 = threading.Thread(target=online_next_departures, args=(station1, direction2))
+            x2 = threading.Thread(target=online_next_departures, args=(station2, direction2))
             x2.start()
         else:
             print(" do not start thread 2 because it is still running")
