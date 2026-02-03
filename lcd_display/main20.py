@@ -37,8 +37,11 @@ station1   = '900066102' # Botanischer Garten
 direction1 = '900054104' # Schoeneberg
 station2   = '900066405' # Hindenburgdamm Klingsorstrasse
 direction2 = '900062202' # Rathaus Steglitz
+MIN_WAIT_FIRST_STATION = 9   # lines 0-1 (station1)
+MIN_WAIT_SECOND_STATION = 5  # lines 2-3 (station2)
 
 newest_next_departures = {}
+departures_lock = threading.Lock()
 
 current_prints = [None, None, None, None] # save current print and do not reprint if no change.
 
@@ -62,8 +65,7 @@ def openWebsite(address):
 
 
 def online_next_departures(station=station1, direction=direction1):
-    address = "https://v6.vbb.transport.rest/stops/" + station + "/departures?/&direction=" + direction + "&results" \
-                                                                                                          "=6&duration=20&accept=application/x-ndjson"
+    address = "https://v6.vbb.transport.rest/stops/" + station + "/departures?/&direction=" + direction + "&duration=60&accept=application/x-ndjson"
     response_xml = openWebsite(address)
     if response_xml is None:
         print("Warning: response is empty (None).")
@@ -73,17 +75,23 @@ def online_next_departures(station=station1, direction=direction1):
         return ""
     else:
         global newest_next_departures
-        if station not in newest_next_departures.keys():
-            print(" - add station")
-            newest_next_departures[station] = {}
+        data = responseToDict(response_xml)
 
-        newest_next_departures[station][direction] = responseToDict(response_xml)
+        with departures_lock:   # NEW
+            if station not in newest_next_departures:
+                print(" - add station")
+                newest_next_departures[station] = {}
+            newest_next_departures[station][direction] = data
     #update_lines()
 
 
 def print_lcd(message="", lineNo=0, print_debug=""):
     if print_debug != "":
         print(print_debug)
+
+    # force exactly 20 characters (prevents leftover chars on LCD)
+    message = (message or "").ljust(20)[:20]
+
     print(" - lcd line " + str(lineNo) + ": " + message + " (len:" + str(len(message)) + ")")
 
     if current_prints[lineNo] == message:
@@ -92,11 +100,8 @@ def print_lcd(message="", lineNo=0, print_debug=""):
     else:
         current_prints[lineNo] = message
 
-    if len(message) > 20:
-        message = message[0:20]
     if not debugging:
         lcd.lcd_display_string(message, lineNo+1)
-
 
 def update_lines():
     for i in range(4):
@@ -104,77 +109,96 @@ def update_lines():
 
 
 def update_line(lineNo=0):
-    def lcd_empty_line(message=""):
-        print(message)
     print(lineNo)
     stationHere = {0: station1, 1: station1, 2: station2, 3:station2}[lineNo]
     directionHere = {0: direction1, 1: direction1, 2: direction2, 3: direction2}[lineNo]
     if True:#lineNo in [0, 1, 2]:
         # check conditions
-        if stationHere not in newest_next_departures.keys() or directionHere not in newest_next_departures[stationHere] \
-                or 'departures' not in newest_next_departures[stationHere][directionHere].keys():
-            print(newest_next_departures.keys())
-            #print_lcd("(no data)            ", print_debug="Lines 0+1: key direction in response not available")
+        with departures_lock:
+            station_block = newest_next_departures.get(stationHere)
+            dir_block = station_block.get(directionHere) if station_block else None
+            departures = dir_block.get("departures") if dir_block else None
+
+    # --- if not available yet: print placeholder instead of returning silently (NEW) ---
+        if not departures:
+            print_lcd("(loading)           ", lineNo)
             return None
-        """if lineNo == 2:  # check whether other direction worked
-            if stationHere not in newest_next_departures.keys() or directionHere not in newest_next_departures[stationHere] \
-                    or 'departures' not in newest_next_departures[stationHere][directionHere].keys():
-                print_lcd("(no data)            ", print_debug="Line 2: key direction2 in response not available")
-                return None"""
 
-        # extract information
-        def extract_departures(nextDep, noDeps):
-            info_show_dir = {"iLine": [None for i in range(noDeps)],
-                             "iDest": [None for i in range(noDeps)],
-                             "diffMin": [None for i in range(noDeps)]}
+        def extract_departures(nextDep, noDeps, min_wait_min=0):
+            info_show_dir = {"iLine": [], "iDest": [], "diffMin": []}
 
-            if len(nextDep) < noDeps:
-                print("next Departures. number of Deps too short")
-                # todo: handle that progroam does not continue with None!
-                return False
             now = datetime.datetime.now()
-            for i in range(noDeps):
-                iLine = nextDep[i]['line']['name']
-                iDest = nextDep[i]['direction'][0:12]
-                iTime = nextDep[i]['when']
-                iWait = datetime.datetime.strptime(iTime[0:19],
-                                                   '%Y-%m-%dT%H:%M:%S') - now
-                if iWait.seconds > 24 * 60 * 60 / 2:
-                    diffMin = (24 * 60 * 60 - iWait.seconds) // 60
-                else:
-                    diffMin = iWait.seconds // 60
-                info_show_dir["iLine"][i], info_show_dir["iDest"][i], info_show_dir["diffMin"][
-                    i] = iLine, iDest, diffMin
+
+            def clean_dest(dest: str) -> str:
+                # requirement (b): remove prefixes
+                # order matters: remove the longer token first
+                return (dest or "").replace("S+U ", "").replace("S ", "").replace("U ", "").replace("Bhf","")
+
+            for dep in nextDep:
+                # stop when we collected enough departures
+                if len(info_show_dir["iLine"]) >= noDeps:
+                    break
+
+                iLine = dep.get('line', {}).get('name')
+                raw_dest = dep.get('direction') or ""
+                iDest = clean_dest(raw_dest)[0:12]
+
+                iTime = dep.get('when') or dep.get('plannedWhen')
+                if not iTime:
+                    continue  # skip entries without time
+
+                try:
+                    dt = datetime.datetime.strptime(iTime[0:19], '%Y-%m-%dT%H:%M:%S')
+                except Exception:
+                    continue  # skip unparsable time strings
+
+                diffMin = int((dt - now).total_seconds() // 60)
+
+                # ignore departures in the past (or "now")
+                if diffMin < 0:
+                    continue
+
+                # requirement (a): only keep departures that are at least min_wait_min away
+                if diffMin < min_wait_min:
+                    continue
+
+                if not iLine:
+                    continue
+
+                info_show_dir["iLine"].append(iLine)
+                info_show_dir["iDest"].append(iDest)
+                info_show_dir["diffMin"].append(diffMin)
+
             return info_show_dir
 
-        #if lineNo in [0, 1, 2]:
-        nextDep = newest_next_departures[stationHere][directionHere]["departures"]
-        info_show_dir1 = extract_departures(nextDep, min(2,len(nextDep)))
 
-        """if lineNo == 2:
-            nextDep = newest_next_departures[stationHere][directionHere]["departures"]
-            info_show_dir2 = extract_departures(nextDep, 1)"""
+        #if lineNo in [0, 1, 2]:
+        min_wait = MIN_WAIT_FIRST_STATION if lineNo < 2 else MIN_WAIT_SECOND_STATION
+
+        info_show_dir1 = extract_departures(departures, 2, min_wait_min=min_wait)
+
+        if len(info_show_dir1["iLine"]) == 0:
+            print_lcd("(too soon)           ", lineNo)
+            return None
+
 
         # print line
+        dep_index = lineNo % 2   # 0 for lines 0+2, 1 for lines 1+3
+
         final_str = "(no data)           "
-        #if lineNo in [0, 1] and info_show_dir1:
-        if len(info_show_dir1["iLine"]) > lineNo:
-            final_str = info_show_dir1["iLine"][lineNo].ljust(3) + " " + info_show_dir1["iDest"][lineNo].ljust(11) + \
-                " " + str(info_show_dir1["diffMin"][lineNo]).rjust(2) + ""
-        
+        if len(info_show_dir1["iLine"]) > dep_index:
+            line = str(info_show_dir1["iLine"][dep_index])[:3].ljust(3)
+            dest = str(info_show_dir1["iDest"][dep_index])[:13].ljust(13)
+            mins = str(info_show_dir1["diffMin"][dep_index]).rjust(3)  # width 3!
+
+            final_str = f"{line} {dest}{mins}"  # 3 +1 +13 +3 = 20
+
+        # IMPORTANT: always send exactly 20 chars so old characters don't remain
+        final_str = final_str.ljust(20)[:20]
+
         print_lcd(final_str, lineNo)
 
-    """if lineNo == 3:
-        if stationHere not in newest_next_departures.keys() or direction1 not in newest_next_departures[stationHere] \
-                or 'realtimeDataUpdatedAt' not in newest_next_departures[stationHere][direction1].keys():
-            print_lcd("(no delay data)     ", lineNo=3,
-                      print_debug="line 3: no delay data yet or key missing")
-            return None
-        iLast_raw = newest_next_departures[stationHere][direction1]["realtimeDataUpdatedAt"]
-        iDelta = datetime.datetime.now() - datetime.datetime.fromtimestamp(iLast_raw)
-        final_str = "(delay: " + str(iDelta.seconds) + "s) "
-        print_lcd(final_str, lineNo)"""
-
+        
 
 def request_timer(wait=INTERVALL_request):
     # repeatedly start requests. This function should be called in an "outer" thread and contains "inner" threads.
